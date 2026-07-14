@@ -267,8 +267,24 @@ export default function Seismos() {
           {showMap && (
             <>
               <h2 className="text-xl mt-2">Barcha skvajinalar xaritasi</h2>
+              {layers.isLoading && (
+                <p className="text-sm text-muted">
+                  Xarita qatlamlari (yoriqlar, seysmogen zonalar) yuklanmoqda...
+                </p>
+              )}
+              {layers.isError && (
+                <div className="rounded-md px-4 py-3 text-sm"
+                  style={{ background: "#f8d7da", color: "#842029" }}>
+                  Yoriqlar va seysmogen zonalarni yuklab bo'lmadi
+                  {layers.error?.response?.status
+                    ? ` (server xatosi: ${layers.error.response.status})`
+                    : " (serverga ulanib bo'lmadi)"}
+                  . Django terminalidagi xatoni tekshiring — ko'pincha sababi
+                  Redis ishlamayotgani yoki shapefile'lar yo'qligi bo'ladi.
+                </div>
+              )}
               <ResultsMap options={options.data} result={result} layers={layers.data}
-                filterMode={settings.filter_mode} />
+                filterMode={settings.filter_mode} minMlgr={Number(settings.min_mlgr) || 2.5} />
             </>
           )}
 
@@ -323,7 +339,7 @@ function triangleIcon(color, size = 10) {
   });
 }
 
-const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMode }) {
+const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMode, minMlgr }) {
   const wrapRef = useRef(null);
 
   const allWells = result?.map?.wells
@@ -373,7 +389,9 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
   }
 
   const RING_MS = [5, 6, 7];
-  const MLGR_VAL = 2.5;
+  // Halqa radiusi foydalanuvchi kiritgan Min M/lgR bo'yicha (asl views.py:
+  // R_km = 10 ** (M / mlgr_val)). 0 yoki bo'sh bo'lsa 2.5 ga tushadi.
+  const MLGR_VAL = minMlgr && minMlgr > 0 ? minMlgr : 2.5;
 
   function ringsFor(w, color) {
     if (!ringsOn(w)) return null;
@@ -399,7 +417,13 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
         ⛶
       </button>
 
-      <MapContainer center={center} zoom={8} style={{ height: 520, width: "100%" }}
+      <MapContainer
+        // MUHIM: qatlamlar (yoriqlar/zonalar) tarmoqdan xarita yaratilgandan
+        // KEYIN keladi; react-leaflet LayersControl esa keyin qo'shilgan
+        // overlaylarni xaritaga ulamaydi. key o'zgarishi xaritani qayta
+        // yaratadi va barcha qatlamlar boshidanoq joyida bo'ladi.
+        key={layers ? "map-with-layers" : "map-without-layers"}
+        center={center} zoom={8} style={{ height: 520, width: "100%" }}
         preferCanvas={true}>
         <LayersControl position="topright">
           {/* Fon xaritalari — eski faylga mos 4 xil */}
@@ -448,9 +472,36 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
             </LayersControl.Overlay>
           )}
 
-          {/* Skvajinalar: har tanlangani O'Z RANGIDA + bosilganda halqalar */}
-          <LayersControl.Overlay checked name="Skvajinalar">
-            <>
+        </LayersControl>
+
+        {/* Zilzilalar — DOIMIY qatlam: qatlam boshqaruvi ro'yxatidan olib
+            tashlandi (foydalanuvchi o'chira olmaydi), har doim ko'rinadi */}
+        <>
+          {earthquakes.map((eq, i) => {
+            const st = eqStyle(eq.mb, filterMode);
+            return (
+              <CircleMarker key={i} center={[eq.lat, eq.lon]}
+                radius={Math.max(st.radius, 6)}
+                pane="markerPane"
+                pathOptions={{ color: "#111", fillColor: st.color, fillOpacity: 0.85, weight: 1.5 }}>
+                <LTooltip>
+                  <div>
+                    <b>Zilzila</b><br />
+                    Sana: {eq.datetime?.replace("T", " ")}<br />
+                    Magnituda (Mb): {eq.mb}<br />
+                    Chuqurlik (km): {eq.depth ?? "—"}<br />
+                    {eq.r_km != null && <>Masofa (km): {eq.r_km}<br /></>}
+                    {eq.mlgr != null && <>M/lgR: {eq.mlgr}</>}
+                  </div>
+                </LTooltip>
+              </CircleMarker>
+            );
+          })}
+        </>
+
+        {/* Skvajinalar — DOIMIY qatlam: qatlam boshqaruvi ro'yxatidan olib
+            tashlandi (foydalanuvchi o'chira olmaydi), har doim ko'rinadi */}
+        <>
               {allWells.map((w) => {
                 const color = w.selected ? colorMap[w.name] : "lightblue";
                 // Tanlanmaganlarga halqa faqat Mb rejimida (eski fayl mantig'i)
@@ -458,11 +509,13 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                 return (
                   <span key={w.name}>
                     <Marker position={[w.lat, w.lon]}
-                      icon={triangleIcon(color)}
-                      eventHandlers={canHaveRings ? { click: () => toggleRings(w) } : {}}>
+                      icon={triangleIcon(color)}>
                       <LTooltip>{w.name}</LTooltip>
                       <Popup maxWidth={480}>
-                        <WellInfoPopup well={w} color={w.selected ? color : null} />
+                        <WellInfoPopup well={w} color={w.selected ? color : null}
+                          canHaveRings={canHaveRings}
+                          ringsOn={ringsOn(w)}
+                          onToggleRings={() => toggleRings(w)} />
                       </Popup>
                     </Marker>
                     {canHaveRings && ringsFor(w, w.selected ? color : "#ADD8E6")}
@@ -470,32 +523,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                 );
               })}
             </>
-          </LayersControl.Overlay>
 
-          <LayersControl.Overlay checked name="Zilzilalar">
-            <>
-              {earthquakes.map((eq, i) => {
-                const st = eqStyle(eq.mb, filterMode);
-                return (
-                  <CircleMarker key={i} center={[eq.lat, eq.lon]}
-                    radius={st.radius}
-                    pathOptions={{ color: st.color, fillColor: st.color, fillOpacity: 0.7, weight: 2 }}>
-                    <LTooltip>
-                      <div>
-                        <b>Zilzila</b><br />
-                        Sana: {eq.datetime?.replace("T", " ")}<br />
-                        Magnituda (Mb): {eq.mb}<br />
-                        Chuqurlik (km): {eq.depth ?? "—"}<br />
-                        {eq.r_km != null && <>Masofa (km): {eq.r_km}<br /></>}
-                        {eq.mlgr != null && <>M/lgR: {eq.mlgr}</>}
-                      </div>
-                    </LTooltip>
-                  </CircleMarker>
-                );
-              })}
-            </>
-          </LayersControl.Overlay>
-        </LayersControl>
       </MapContainer>
 
       {/* Legenda — xarita ichida suzuvchi quti */}
@@ -546,7 +574,7 @@ function Dot({ c }) {
 /* Popup ochilganda skvajina ma'lumotini yuklaydi (well-info endpoint).
    Eski folium popup'idagi jadval bilan bir xil — tanlangan/tanlanmagan
    farqi faqat pastki yozuvda. */
-function WellInfoPopup({ well, color }) {
+function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["well-info", well.name],
     queryFn: async () => {
@@ -571,6 +599,22 @@ function WellInfoPopup({ well, color }) {
   return (
     <div style={{ width: 420, fontFamily: "Arial", fontSize: 12 }}>
       <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>Skvajina ma'lumotlari</h4>
+
+      {/* M=5/6/7 halqalarini yoqish/o'chirish (avval marker bosilganda edi,
+          lekin u Popup bilan konflikt qilardi — endi alohida tugma) */}
+      {canHaveRings && (
+        <button onClick={onToggleRings}
+          style={{
+            marginBottom: 8, padding: "5px 10px", cursor: "pointer",
+            border: `1px solid ${color || "#0B43FA"}`, borderRadius: 5,
+            background: ringsOn ? (color || "#0B43FA") : "white",
+            color: ringsOn ? "white" : (color || "#0B43FA"),
+            fontWeight: "bold", fontSize: 12,
+          }}>
+          {ringsOn ? "◉ Halqalarni o'chirish" : "◯ M=5/6/7 halqalarini ko'rsatish"}
+        </button>
+      )}
+
       {isLoading && <p>Yuklanmoqda...</p>}
       {isError && <p style={{ color: "#dc3545" }}>Ma'lumotni yuklab bo'lmadi</p>}
       {!isLoading && !isError && (

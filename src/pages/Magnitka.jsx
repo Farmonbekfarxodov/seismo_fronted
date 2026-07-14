@@ -12,11 +12,13 @@ async function fetchStations() {
   const { data } = await apiClient.get("/magnitka/api/stations/");
   return data.stations;
 }
-async function fetchMeasurements(stationIds, days) {
+async function fetchMeasurements(stationIds, startDate, endDate) {
   if (stationIds.length === 0) return { series: [], base: "Yangibozor" };
-  const { data } = await apiClient.get("/magnitka/api/measurements/", {
-    params: { station_ids: stationIds.join(","), days },
-  });
+  const params = { station_ids: stationIds.join(",") };
+  // Sanalar tanlanmasa — parametr yuborilmaydi, backend BARCHA ma'lumotni qaytaradi
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  const { data } = await apiClient.get("/magnitka/api/measurements/", { params });
   return { series: data.data, base: data.base_station };
 }
 async function fetchEarthquakes(minMag) {
@@ -30,7 +32,7 @@ const LINE_COLORS = ["#0d6efd", "#198754", "#fd7e14", "#dc3545", "#6f42c1"];
 
 export default function Magnitka() {
   const [selectedIds, setSelectedIds] = useState([]);
-  const [days, setDays] = useState(30);
+  const [dates, setDates] = useState({ start: "", end: "" });
   // Eski sahifadagi "Magnitudalarni ko'rsatish" opsiyasi
   const [showMag, setShowMag] = useState(false);
   const [minMag, setMinMag] = useState(4.0);
@@ -41,8 +43,8 @@ export default function Magnitka() {
   });
 
   const measurementsQuery = useQuery({
-    queryKey: ["magnitka-measurements", selectedIds, days],
-    queryFn: () => fetchMeasurements(selectedIds, days),
+    queryKey: ["magnitka-measurements", selectedIds, dates.start, dates.end],
+    queryFn: () => fetchMeasurements(selectedIds, dates.start, dates.end),
     enabled: selectedIds.length > 0,
   });
 
@@ -124,10 +126,18 @@ export default function Magnitka() {
 
           <div className="mt-4 pt-4 border-t border-border space-y-3">
             <div>
-              <label className="label" htmlFor="days">Davr (kun)</label>
-              <input id="days" type="number" min="1" max="365" className="input-field"
-                value={days} onChange={(e) => setDays(Number(e.target.value))} />
+              <label className="label">Boshlanish sanasi</label>
+              <input type="date" className="input-field" value={dates.start}
+                onChange={(e) => setDates({ ...dates, start: e.target.value })} />
             </div>
+            <div>
+              <label className="label">Tugash sanasi</label>
+              <input type="date" className="input-field" value={dates.end}
+                onChange={(e) => setDates({ ...dates, end: e.target.value })} />
+            </div>
+            <p className="text-xs text-muted">
+              Sanalar tanlanmasa, stantsiyaning barcha ma'lumotlari ko'rsatiladi
+            </p>
 
             {/* Eski sahifadagi zilzila opsiyalari */}
             <label className="flex items-center gap-2 text-sm cursor-pointer">
