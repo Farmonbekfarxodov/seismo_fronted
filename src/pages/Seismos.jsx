@@ -1,8 +1,8 @@
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   MapContainer, TileLayer, CircleMarker, Circle, Marker, Popup,
-  Tooltip as LTooltip, GeoJSON, LayersControl,
+  Tooltip as LTooltip, GeoJSON, LayersControl, useMap,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -12,6 +12,22 @@ import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 
 const Plot = createPlotlyComponent(Plotly);
+
+function FullscreenInvalidate({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    // Animatsiya paytida va tugagach xaritani bir necha marta yangilaymiz
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 400);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [trigger, map]);
+  return null;
+}
 
 // Backend: seismos_app/api_views.py
 async function fetchOptions() {
@@ -341,6 +357,21 @@ function triangleIcon(color, size = 10) {
 
 const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMode, minMlgr }) {
   const wrapRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function handleChange() {
+      // Safari uchun webkit qo'shimchasi bilan tekshiriladi
+      setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", handleChange);
+    document.addEventListener("webkitfullscreenchange", handleChange); // Safari
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleChange);
+      document.removeEventListener("webkitfullscreenchange", handleChange);
+    };
+  }, []);
 
   const allWells = result?.map?.wells
     ?? Object.entries(options.well_coords).map(([name, c]) => ({
@@ -384,8 +415,13 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
 
   function toggleFullscreen() {
     const el = wrapRef.current;
-    if (!document.fullscreenElement) el?.requestFullscreen?.();
-    else document.exitFullscreen?.();
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el?.requestFullscreen) el.requestFullscreen();
+      else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen(); // Safari
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); // Safari
+    }
   }
 
   const RING_MS = [5, 6, 7];
@@ -408,7 +444,12 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
   }
 
   return (
-    <div className="card p-0 overflow-hidden relative" ref={wrapRef}>
+    // MUHIM: Balandlik ota div ga biriktirildi va moslashuvchan (flex-col) qilindi
+    <div
+      className="card p-0 overflow-hidden relative flex flex-col"
+      ref={wrapRef}
+      style={{ height: isFullscreen ? "100vh" : 520 }}
+    >
       {/* To'liq ekran — eski xaritadagidek chap yuqorida (zoom ostida) */}
       <button onClick={toggleFullscreen}
         className="absolute z-[1000] bg-white border border-border rounded px-2 py-1 text-xs shadow hover:bg-ink-900"
@@ -423,8 +464,11 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
         // overlaylarni xaritaga ulamaydi. key o'zgarishi xaritani qayta
         // yaratadi va barcha qatlamlar boshidanoq joyida bo'ladi.
         key={layers ? "map-with-layers" : "map-without-layers"}
-        center={center} zoom={8} style={{ height: 520, width: "100%" }}
+        center={center} zoom={8}
+        // MUHIM: MapContainer endi to'liq 100% balandlik va kenglikni oladi
+        style={{ height: "100%", width: "100%", flexGrow: 1 }}
         preferCanvas={true}>
+        <FullscreenInvalidate trigger={isFullscreen} />
         <LayersControl position="topright">
           {/* Fon xaritalari — eski faylga mos 4 xil */}
           <LayersControl.BaseLayer checked name="OpenStreetMap">
