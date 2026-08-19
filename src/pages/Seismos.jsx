@@ -740,13 +740,13 @@ function SeriesChart({ series }) {
       );
     }
 
-    // Zilzilalar — o'ng (Mb) o'qda ustunlar (3-rasmdagidek)
+    // Zilzilalar — o'ng (Mb) o'qda ustunlar, ingichkalashtirilgan (3 kunlik)
     if (series.earthquakes?.length) {
       traces.push({
         x: series.earthquakes.map((eq) => eq.datetime.slice(0, 10)),
         y: series.earthquakes.map((eq) => eq.mb),
         type: "bar", name: "Zilzila (Mb)", yaxis: "y2",
-        width: 1000 * 60 * 60 * 24 * 12, // ~12 kunlik ingichka ustun
+        width: 1000 * 60 * 60 * 24 * 0.5,// ~3 kunlik ingichka ustun
         marker: {
           color: series.earthquakes.map((eq) => (eq.mb >= 6 ? "#dc3545" : "#4B0082")),
         },
@@ -758,6 +758,40 @@ function SeriesChart({ series }) {
 
     return traces;
   }, [series]);
+
+  // Zilzila ustuniga bosilganda ochiladigan, qayta bosilsa yopiladigan
+  // (toggle) belgi. Bir nechtasi bir vaqtda ochiq turishi mumkin.
+  const [openedEq, setOpenedEq] = useState(() => new Set());
+
+  function handlePlotClick(event) {
+    const pt = event?.points?.[0];
+    if (!pt || pt.data?.name !== "Zilzila (Mb)") return;
+    const idx = pt.pointIndex;
+    setOpenedEq((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
+
+  const eqAnnotations = useMemo(() => {
+    if (!series.earthquakes?.length) return [];
+    return [...openedEq].map((idx) => {
+      const eq = series.earthquakes[idx];
+      if (!eq) return null;
+      return {
+        x: eq.datetime.slice(0, 10), y: eq.mb, yref: "y2",
+        text:
+          `<b>${eq.datetime.replace("T", " ")}</b><br>` +
+          `Mb: ${eq.mb}${eq.depth != null ? `, Chuqurlik: ${eq.depth} km` : ""}<br>` +
+          `${eq.r_km != null ? `Masofa: ${eq.r_km} km` : ""}${eq.mlgr != null ? `, M/lgR: ${eq.mlgr}` : ""}`,
+        showarrow: true, arrowhead: 2, ax: 0, ay: -40,
+        bgcolor: "white", bordercolor: "#4B0082", borderwidth: 1, borderpad: 4,
+        font: { size: 10, color: "#212529" },
+      };
+    }).filter(Boolean);
+  }, [openedEq, series.earthquakes]);
 
   function downloadPng() {
     const el = document.getElementById(chartId)?.querySelector(".js-plotly-plot");
@@ -784,6 +818,7 @@ function SeriesChart({ series }) {
       <div className="p-2" id={chartId}>
         <Plot
           data={data}
+          onClick={handlePlotClick}
           layout={{
             title: { text: `${series.key} - ${series.param}`, font: { size: 13 } },
             height: 420,
@@ -796,6 +831,7 @@ function SeriesChart({ series }) {
               range: [0, Math.max(7, ...(series.earthquakes?.map((e) => e.mb) || [7])) + 0.5],
               showgrid: false,
             },
+            annotations: eqAnnotations,
             plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
             legend: { orientation: "h", y: -0.32 },
             font: { size: 11, color: "#212529" },
