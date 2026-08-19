@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 
-// Backend: upload_catalog_app (endi to'liq JSON API)
-// Root urls.py: path('catalog-list/', include('upload_catalog_app.urls'))
 const BASE = "/catalog-list";
 
-async function fetchCatalog() {
-  const { data } = await apiClient.get(`${BASE}/`);
+// fetchCatalog endi parametrlarni oladi
+async function fetchCatalog({ queryKey }) {
+  const [_key, searchParams] = queryKey;
+  const { data } = await apiClient.get(`${BASE}/`, { params: searchParams });
   return data;
 }
 
@@ -20,11 +20,26 @@ export default function Catalog() {
     depth: "", magnitude: "", epicenter: "",
   });
 
+  // Qidiruv sanalari uchun state
+  const [searchDates, setSearchDates] = useState({ start: "", end: "" });
+
+  // Haqiqiy qidiruvga yuboriladigan sanalar (Tugma bosilganda o'zgaradi)
+  const [activeSearch, setActiveSearch] = useState({ start: "", end: "" });
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["catalog"],
+    queryKey: ["catalog", activeSearch],
     queryFn: fetchCatalog,
   });
 
+  function handleSearch(e) {
+    e.preventDefault();
+    setActiveSearch(searchDates);
+  }
+
+  function handleClearSearch() {
+    setSearchDates({ start: "", end: "" });
+    setActiveSearch({ start: "", end: "" });
+  }
   async function handleFetchFromApi() {
     setBusy("api");
     setFeedback(null);
@@ -83,15 +98,17 @@ export default function Catalog() {
     }
   }
 
-  return (
+return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">Zilzilalar katalogi</h1>
           <p className="text-sm text-muted mt-1">
-            {data && `${data.start_date ?? "—"} dan ${data.end_date ?? "—"} gacha`}
+            Umumiy baza: {data && `${data.start_date ?? "—"} dan ${data.end_date ?? "—"} gacha`}
           </p>
         </div>
+
+        {/* Yuqoridagi tugmalar (API'dan yangilash, Fayldan yuklash) */}
         <div className="flex gap-2">
           <button className="btn-secondary" onClick={handleFetchFromApi} disabled={busy === "api"}>
             {busy === "api" ? "Yuklanmoqda..." : "API'dan yangilash"}
@@ -103,43 +120,84 @@ export default function Catalog() {
         </div>
       </div>
 
+      {/* Qidiruv paneli */}
+      <div className="card mb-6 p-4">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-end gap-4">
+          <div className="flex-1 w-full">
+            <label className="label">Boshlanish sanasi</label>
+            <input type="date" className="input-field" value={searchDates.start}
+              onChange={(e) => setSearchDates({ ...searchDates, start: e.target.value })} />
+          </div>
+          <div className="flex-1 w-full">
+            <label className="label">Tugash sanasi</label>
+            <input type="date" className="input-field" value={searchDates.end}
+              onChange={(e) => setSearchDates({ ...searchDates, end: e.target.value })} />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button type="submit" className="btn-primary flex-1 sm:flex-none">
+              Qidirish
+            </button>
+            {(activeSearch.start || activeSearch.end) && (
+              <button type="button" onClick={handleClearSearch} className="btn-secondary flex-1 sm:flex-none">
+                Tozalash
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
       {feedback && (
         <p className={`text-sm mb-4 ${feedback.ok ? "text-teal" : "text-danger"}`}>{feedback.text}</p>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="card lg:col-span-2 p-0 overflow-hidden">
+          {/* Sarlavha: agar filter qilingan bo'lsa natijalar soni ko'rinadi */}
+          <div className="px-4 py-3 border-b border-border bg-ink-900 flex justify-between items-center">
+            <h3 className="text-sm font-semibold">
+              {data?.filtered ? `Qidiruv natijalari (${data.count} ta)` : "So'nggi 20 ta yozuv"}
+            </h3>
+          </div>
+
           {isLoading && <p className="text-sm text-muted p-4">Yuklanmoqda...</p>}
           {isError && <p className="text-sm text-danger p-4">Ma'lumotni yuklab bo'lmadi</p>}
+
+          {data?.records?.length === 0 && !isLoading && (
+             <p className="text-sm text-muted p-4">Berilgan sanalar oralig'ida zilzilalar topilmadi.</p>
+          )}
+
           {data?.records?.length > 0 && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="px-4 py-3 font-medium">Sana</th>
-                  <th className="px-4 py-3 font-medium">Vaqt</th>
-                  <th className="px-4 py-3 font-medium">Kенglik/Uzunlik</th>
-                  <th className="px-4 py-3 font-medium">Chuqurlik</th>
-                  <th className="px-4 py-3 font-medium">Mb</th>
-                  <th className="px-4 py-3 font-medium">Epitsentr</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.records.map((r) => (
-                  <tr key={r.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3 font-mono text-muted">{r.Event_date}</td>
-                    <td className="px-4 py-3 font-mono text-muted">{r.Event_time}</td>
-                    <td className="px-4 py-3 font-mono">{r.Latitude}, {r.Longitude}</td>
-                    <td className="px-4 py-3">{r.Depth} km</td>
-                    <td className="px-4 py-3 text-amber font-mono">{r.Mb}</td>
-                    <td className="px-4 py-3">{r.Epicenter}</td>
+            <div className="max-h-[600px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-white">
+                  <tr className="border-b border-border text-left text-muted">
+                    <th className="px-4 py-3 font-medium">Sana</th>
+                    <th className="px-4 py-3 font-medium">Vaqt</th>
+                    <th className="px-4 py-3 font-medium">Kenglik/Uzunlik</th>
+                    <th className="px-4 py-3 font-medium">Chuqurlik</th>
+                    <th className="px-4 py-3 font-medium">Mb</th>
+                    <th className="px-4 py-3 font-medium">Epitsentr</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.records.map((r) => (
+                    <tr key={r.id} className="border-b border-border last:border-0 hover:bg-ink-900">
+                      <td className="px-4 py-3 font-mono text-muted">{r.Event_date}</td>
+                      <td className="px-4 py-3 font-mono text-muted">{r.Event_time}</td>
+                      <td className="px-4 py-3 font-mono">{r.Latitude}, {r.Longitude}</td>
+                      <td className="px-4 py-3">{r.Depth} km</td>
+                      <td className="px-4 py-3 text-amber font-mono">{r.Mb}</td>
+                      <td className="px-4 py-3">{r.Epicenter}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
-        <form onSubmit={handleManualSubmit} className="card space-y-3">
+        {/* Qo'lda kiritish formasi (o'z holicha) */}
+        <form onSubmit={handleManualSubmit} className="card space-y-3 h-fit">
           <p className="label">Qo'lda kiritish</p>
           <div className="grid grid-cols-2 gap-3">
             <input type="date" required className="input-field" value={manualForm.event_date}
