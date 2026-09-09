@@ -594,10 +594,17 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
             Tanlangan skvajinalar (har biri o'z rangida)
           </div>
           <div><Tri c="#ADD8E6" /> Tanlanmagan skvajinalar</div>
-          <div><Dot c="#8B0000" /> Yer yoriqlari</div>
-          <div><Dot c="#e75480" /> Seysmogen zonalar</div>
-          <div className="text-muted italic pt-0.5">
-            Skvajina belgisi bosilsa M=5/6/7 halqalari yoqiladi/o'chiriladi
+          <div className="flex items-center gap-1.5 py-0.5">
+            <div className="w-4 h-[3px] bg-[#8B0000] shrink-0"></div>
+            <span>Yer yoriqlari</span>
+          </div>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <div className="w-4 h-3 bg-[#e75480] border border-[#d23b66] opacity-60 shrink-0"></div>
+            <span>Seysmogen zonalar</span>
+          </div>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <div className="w-3 h-3 rounded-full border border-[#0B43FA] bg-transparent shrink-0"></div>
+            <span>M=5/6/7 halqalari Sezgirlik zonasi</span>
           </div>
         </div>
       </div>
