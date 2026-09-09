@@ -15,6 +15,7 @@ const Anomaly = lazy(() => import("./pages/Anomaly"));
 const Informativlik = lazy(() => import("./pages/Informativlik"));
 const Catalog = lazy(() => import("./pages/Catalog"));
 const DownloadBase = lazy(() => import("./pages/DownloadBase"));
+const EpochAnalysis = lazy(() => import("./pages/EpochAnalysis"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/seismos" element={<Seismos />} />
+                <Route path="/epoch" element={<EpochAnalysis />} />
                 <Route path="/magnitka" element={<Magnitka />} />
                 <Route path="/anomaly" element={<Anomaly />} />
                 <Route path="/informativlik" element={<Informativlik />} />

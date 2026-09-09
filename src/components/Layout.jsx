@@ -43,6 +43,7 @@ export default function Layout() {
               { to: "/anomaly", label: "Anomaliya" },
               { to: "/informativlik", label: "Informativlik" },
               { to: "/catalog", label: "Katalog" },
+              { to: "/epoch", label: "Zilzila tahlili" },
             ].map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end}
                 className={({ isActive }) =>
