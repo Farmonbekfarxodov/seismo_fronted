@@ -841,7 +841,7 @@ function SeriesChart({ series }) {
             annotations: eqAnnotations,
             plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
             legend: { orientation: "h", y: -0.32 },
-            font: { size: 11, color: "#212529" },
+            font: { size: 14, color: "#212529" },
             hovermode: "closest",
             bargap: 0,
           }}

@@ -368,7 +368,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
               bgcolor: "rgba(255,255,255,0.85)",
             }],
             plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
-            font: { size: 11, color: "#212529" },
+            font: { size: 14, color: "#212529" },
             hovermode: "closest",
             showlegend: true,
             legend: { orientation: "h", y: -0.22, font: { size: 10 } },
