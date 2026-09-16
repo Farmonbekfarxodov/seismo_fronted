@@ -790,12 +790,11 @@ function SeriesChart({ series }) {
       return {
         x: eq.datetime.slice(0, 10), y: eq.mb, yref: "y2",
         text:
-          `<b>${eq.datetime.replace("T", " ")}</b><br>` +
           `Mb: ${eq.mb}${eq.depth != null ? `, Chuqurlik: ${eq.depth} km` : ""}<br>` +
-          `${eq.r_km != null ? `Masofa: ${eq.r_km} km` : ""}${eq.mlgr != null ? `, M/lgR: ${eq.mlgr}` : ""}`,
+          `${eq.r_km != null ? `Masofa: ${eq.r_km} km` : ""}`,
         showarrow: true, arrowhead: 2, ax: 0, ay: -40,
         bgcolor: "white", bordercolor: "#4B0082", borderwidth: 1, borderpad: 4,
-        font: { size: 10, color: "#212529" },
+        font: { size: 14, color: "#212529" },
       };
     }).filter(Boolean);
   }, [openedEq, series.earthquakes]);
