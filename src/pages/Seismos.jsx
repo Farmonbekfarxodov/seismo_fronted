@@ -844,6 +844,11 @@ function SeriesChart({ series }) {
             font: { size: 16, color: "#212529" },
             hovermode: "closest",
             bargap: 0,
+            hoverlabel: {
+              font: {
+                size: 16 // Shu yerdagi raqamni o'zingizga ma'qul kattalikda o'zgartiring (masalan, 18 yoki 20)
+              }
+            }
           }}
           config={{ responsive: true, displaylogo: false, modeBarButtonsToRemove: ["lasso2d", "select2d"] }}
           style={{ width: "100%" }}
