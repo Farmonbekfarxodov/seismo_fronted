@@ -759,7 +759,7 @@ function SeriesChart({ series }) {
         },
         customdata: series.earthquakes.map((eq) => [eq.r_km, eq.mlgr]),
         hovertemplate:
-          "Zilzila: %{x}<br>Mb: %{y}<br>Masofa: %{customdata[0]} km<br>M/lgR: %{customdata[1]}<extra></extra>",
+          "Sana: %{x}<br>Mb: %{y}<br>Masofa: %{customdata[0]} km<extra></extra>",
       });
     }
 
