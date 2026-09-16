@@ -827,7 +827,7 @@ function SeriesChart({ series }) {
           data={data}
           onClick={handlePlotClick}
           layout={{
-            title: { text: `${series.key} - ${series.param}`, font: { size: 13 } },
+            title: { text: `${series.key} - ${series.param}`, font: { size: 17 } },
             height: 420,
             margin: { l: 60, r: 60, t: 45, b: 40 },
             xaxis: { gridcolor: "#DEE2E6" },
@@ -841,7 +841,7 @@ function SeriesChart({ series }) {
             annotations: eqAnnotations,
             plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
             legend: { orientation: "h", y: -0.32 },
-            font: { size: 14, color: "#212529" },
+            font: { size: 16, color: "#212529" },
             hovermode: "closest",
             bargap: 0,
           }}
