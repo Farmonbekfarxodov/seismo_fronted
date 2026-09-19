@@ -1,6 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import {
+  MapContainer, TileLayer, Marker, Popup, GeoJSON,
+  LayersControl, LayerGroup, Tooltip as LTooltip, useMap,
+} from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Plotly from "plotly.js-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
@@ -20,6 +24,11 @@ async function postAnalyze(payload) {
 }
 async function fetchHistory() {
   const { data } = await apiClient.get("/anomaly/history/");
+  return data;
+}
+// Xarita qatlamlari (yer yoriqlari, seysmogen zonalar) — seismos_app bilan umumiy
+async function fetchLayers() {
+  const { data } = await apiClient.get("/seismos/api/layers/");
   return data;
 }
 
@@ -60,6 +69,12 @@ export default function Anomaly() {
 function AnalysisTab() {
   const queryClient = useQueryClient();
   const options = useQuery({ queryKey: ["anomaly-options"], queryFn: fetchOptions });
+  // Qatlamlar og'ir (~1MB) — 24 soat keshlanadi, sahifa bilan birga yuklanadi
+  const layers = useQuery({
+    queryKey: ["map-layers"],
+    queryFn: fetchLayers,
+    staleTime: Infinity,
+  });
 
   const [wells, setWells] = useState([]);
   const [params, setParams] = useState([]);
@@ -207,7 +222,7 @@ function AnalysisTab() {
           </div>
         )}
 
-        {result && <AnomalyMap map={result.map} />}
+        {result && <AnomalyMap map={result.map} layers={layers.data} />}
 
         {result?.results?.length === 0 && (
           <div className="card">
@@ -218,8 +233,8 @@ function AnalysisTab() {
         )}
 
         {result?.results?.map((r) => (
-          <LazyRender key={`${r.well}-${r.param}`} height={430}>
-            <AnomalyChart result={r} earthquakes={result.map.earthquakes} />
+          <LazyRender key={`${r.well}-${r.param}`} height={540}>
+            <AnomalyChart result={r} sigma={result.meta.sigma} />
           </LazyRender>
         ))}
       </div>
@@ -227,89 +242,403 @@ function AnalysisTab() {
   );
 }
 
-function AnomalyMap({ map }) {
-  const center = map.wells.length ? [map.wells[0].lat, map.wells[0].lon] : [41.3, 69.2];
+/* ============================================================
+   XARITA — eski create_anomaly_map_detailed bilan bir xil:
+   fon xaritalari, yer yoriqlari va seysmogen zonalar qatlamlari,
+   anomal/normal skvajina guruhlari, to'liq quduq popup'i,
+   to'liq ekran tugmasi va shartli belgilar.
+   ============================================================ */
+
+function FullscreenInvalidate({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [trigger, map]);
+  return null;
+}
+
+/* Normal skvajina — ko'k uchburchak (eski DivIcon bilan bir xil) */
+function normalIcon(size = 6) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:0;height:0;border-left:${size}px solid transparent;border-right:${size}px solid transparent;border-bottom:${size * 2}px solid #3388ff;"></div>`,
+    iconSize: [size * 2, size * 2],
+    iconAnchor: [size, size],
+  });
+}
+
+/* Anomal skvajina — qizil uchburchak + pulsatsiyalanuvchi halqa */
+function anomalousIcon() {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;">
+        <div class="anomaly-pulse" style="width:20px;height:20px;background-color:rgba(255,0,0,0.6);border-radius:50%;"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:16px solid red;"></div>
+      </div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+}
+
+const PULSE_CSS = `
+@keyframes anomalyPulse {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.anomaly-pulse { animation: anomalyPulse 1.5s infinite; }
+.zone-label { background: transparent; border: none; box-shadow: none; font-weight: 600; }
+`;
+
+function AnomalyMap({ map, layers }) {
+  const wrapRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function handleChange() {
+      setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", handleChange);
+    document.addEventListener("webkitfullscreenchange", handleChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleChange);
+      document.removeEventListener("webkitfullscreenchange", handleChange);
+    };
+  }, []);
+
+  function toggleFullscreen() {
+    const el = wrapRef.current;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el?.requestFullscreen) el.requestFullscreen();
+      else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  }
+
+  const wells = map?.wells ?? [];
+  const anomalous = useMemo(() => wells.filter((w) => w.anomalous), [wells]);
+  const normal = useMemo(() => wells.filter((w) => !w.anomalous), [wells]);
+
+  // Markaz: anomal quduqlar o'rtachasi, bo'lmasa Toshkent (eski mantiq)
+  const center = useMemo(() => {
+    if (!anomalous.length) return [41.2995, 69.2401];
+    return [
+      anomalous.reduce((s, w) => s + w.lat, 0) / anomalous.length,
+      anomalous.reduce((s, w) => s + w.lon, 0) / anomalous.length,
+    ];
+  }, [anomalous]);
 
   return (
-    <div className="card p-0 overflow-hidden">
-      <MapContainer center={center} zoom={6} style={{ height: 380, width: "100%" }} preferCanvas={true}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap" />
-        {map.wells.map((w) => (
-          <CircleMarker key={w.name} center={[w.lat, w.lon]}
-            radius={w.anomalous ? 9 : 5}
-            pathOptions={{
-              color: w.anomalous ? "#dc3545" : "#0d6efd",
-              fillColor: w.anomalous ? "#dc3545" : "#0d6efd",
-              fillOpacity: 0.85,
-            }}>
-            <Popup>
-              <b>{w.name}</b><br />
-              {w.anomalous
-                ? `Anomaliya: ${w.params.join(", ")}`
-                : "Anomaliya topilmadi"}
-            </Popup>
-          </CircleMarker>
-        ))}
+    <div className="card p-0 overflow-hidden relative flex flex-col"
+      ref={wrapRef}
+      style={{ height: isFullscreen ? "100vh" : 520 }}>
+      <style>{PULSE_CSS}</style>
+
+      <button onClick={toggleFullscreen}
+        className="absolute z-[1000] bg-white border border-border rounded px-2 py-1 text-xs shadow hover:bg-ink-900"
+        style={{ top: 80, left: 10 }}
+        title="To'liq ekran">
+        ⛶
+      </button>
+
+      <MapContainer
+        // Qatlamlar tarmoqdan keyin keladi — key o'zgarishi xaritani qayta
+        // yaratadi va overlaylar boshidanoq joyida bo'ladi (Seismos bilan bir xil)
+        key={layers ? "anomaly-map-with-layers" : "anomaly-map-without-layers"}
+        center={center} zoom={7}
+        style={{ height: "100%", width: "100%", flexGrow: 1 }}
+        preferCanvas={true}>
+        <FullscreenInvalidate trigger={isFullscreen} />
+
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="OpenStreetMap">
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors" />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Terrain">
+            <TileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenTopoMap" />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Light Map">
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Satellite">
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri" />
+          </LayersControl.BaseLayer>
+
+          {layers?.cracks && (
+            <LayersControl.Overlay checked name="🌍 Yer yoriqlari">
+              <GeoJSON data={layers.cracks}
+                style={{ color: "#8B0000", weight: 1, opacity: 0.7 }}
+                onEachFeature={(f, l) => {
+                  if (f.properties?.NAME) l.bindTooltip(`Yoriq: ${f.properties.NAME}`);
+                }} />
+            </LayersControl.Overlay>
+          )}
+
+          {layers?.zones && (
+            <LayersControl.Overlay checked name="🔴 Seysmogen zonalar">
+              <GeoJSON data={layers.zones}
+                style={{ color: "#e75480", weight: 2, fillColor: "#ffb6c1", fillOpacity: 0.35 }}
+                onEachFeature={(f, l) => {
+                  const p = f.properties || {};
+                  const name = p.seysmogen_ || p.hududiy_ma || "Seysmogen zona";
+                  l.bindPopup(`<b>${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
+                  if (name) {
+                    l.bindTooltip(String(name), {
+                      permanent: true, direction: "center", className: "zone-label",
+                    });
+                  }
+                }} />
+            </LayersControl.Overlay>
+          )}
+
+          {/* Normal birinchi, anomal ustida tursin — eski qatlam tartibi */}
+          <LayersControl.Overlay checked name="✅ Normal skvajinalar">
+            <LayerGroup>
+              {normal.map((w) => (
+                <Marker key={w.name} position={[w.lat, w.lon]} icon={normalIcon()}>
+                  <LTooltip>
+                    <b>{w.name}</b><br />
+                    <span style={{ color: "green" }}>Normal</span>
+                  </LTooltip>
+                  <Popup maxWidth={480}>
+                    <WellInfoPopup well={w} />
+                  </Popup>
+                </Marker>
+              ))}
+            </LayerGroup>
+          </LayersControl.Overlay>
+
+          <LayersControl.Overlay checked name="⚠️ Anomal skvajinalar">
+            <LayerGroup>
+              {anomalous.map((w) => (
+                <Marker key={w.name} position={[w.lat, w.lon]} icon={anomalousIcon()}>
+                  <LTooltip>
+                    <b>{w.name}</b><br />
+                    <span style={{ color: "red" }}>⚠️ Anomaliya: {w.params.join(", ")}</span>
+                  </LTooltip>
+                  <Popup maxWidth={480}>
+                    <WellInfoPopup well={w} />
+                  </Popup>
+                </Marker>
+              ))}
+            </LayerGroup>
+          </LayersControl.Overlay>
+        </LayersControl>
       </MapContainer>
-      <div className="flex gap-5 px-4 py-2.5 text-xs text-muted border-t border-border">
-        <span><span className="inline-block w-2.5 h-2.5 rounded-full bg-danger mr-1.5" />Anomaliyali quduq</span>
-        <span><span className="inline-block w-2.5 h-2.5 rounded-full bg-teal mr-1.5" />Normal quduq</span>
+
+      {/* Shartli belgilar — eski legend_html bilan bir xil */}
+      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs"
+        style={{ minWidth: 190 }}>
+        <b>Shartli belgilar:</b>
+        <div className="mt-1 space-y-0.5">
+          <div><Tri c="red" /> Anomal skvajina</div>
+          <div><Tri c="#3388ff" /> Normal skvajina</div>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <div className="w-4 h-[3px] bg-[#8B0000] shrink-0"></div>
+            <span>Yer yorig'i</span>
+          </div>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <div className="w-4 h-3 bg-[#e75480] border border-[#d23b66] opacity-60 shrink-0"></div>
+            <span>Seysmogen zona</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-/* Grafik (Plotly, zoom bilan): qiymatlar + sigma chegaralari +
-   anomal nuqtalar (qizil markerlar) + zilzila vertikal chiziqlari */
-function AnomalyChart({ result, earthquakes }) {
-  const anomalyPoints = useMemo(() => {
-    const xs = [], ys = [];
-    result.anomalies.forEach((a) => {
-      a.dates.forEach((d, i) => { xs.push(d); ys.push(a.values[i]); });
-    });
-    return { xs, ys };
-  }, [result]);
+function Tri({ c }) {
+  return <span className="inline-block align-middle mr-0.5"
+    style={{ width: 0, height: 0, borderLeft: "5px solid transparent",
+             borderRight: "5px solid transparent", borderBottom: `10px solid ${c}` }} />;
+}
 
-  const { shapes, annotations } = useMemo(() => {
-    const shapes = [], annotations = [];
-    const first = result.dates[0];
-    const last = result.dates[result.dates.length - 1];
-    for (const eq of earthquakes || []) {
-      const day = eq.datetime.slice(0, 10);
-      if (day < first || day > last) continue;
-      shapes.push({
-        type: "line", x0: day, x1: day, yref: "paper", y0: 0, y1: 1,
-        line: { color: "rgba(108,117,125,0.5)", width: 1 },
+/* Popup ochilganda skvajina ma'lumotini yuklaydi (well-info endpoint) —
+   eski folium popup'idagi jadvalning aynan o'zi, mineralizatsiya rasmi bilan. */
+function WellInfoPopup({ well }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["well-info", well.name],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/seismos/api/well-info/", {
+        params: { name: well.name },
       });
-      annotations.push({
-        x: day, yref: "paper", y: 1.02, showarrow: false,
-        text: `M${eq.mb}`, font: { size: 9, color: "#6c757d" },
+      return data?.[well.name] ?? data ?? {};
+    },
+    staleTime: Infinity,
+  });
+
+  const info = data || {};
+  const rows = [
+    ["Nomi", info.nomi || well.name],
+    ["Quduq turi", info.quduq_turi],
+    ["Chuqurlik", info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
+    ["Seysmotektonik holat", info.seysmotektonik_holat],
+    ["Strategrafik taqsimoti", info.strategrafik_taqsimoti],
+    ["Litologik tarkibi", info.litologik_tarkibi],
+  ];
+
+  return (
+    <div style={{ width: 420, fontFamily: "Arial", fontSize: 12 }}>
+      <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>Skvajina ma'lumotlari</h4>
+
+      {isLoading && <p>Yuklanmoqda...</p>}
+      {isError && <p style={{ color: "#dc3545" }}>Ma'lumotni yuklab bo'lmadi</p>}
+      {!isLoading && !isError && (
+        <>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <tbody>
+              {rows.map(([label, value], i) => (
+                <tr key={label} style={{ background: i % 2 === 0 ? "#f8f9fa" : "white" }}>
+                  <td style={{ padding: 5, border: "1px solid #dee2e6", fontWeight: "bold" }}>{label}:</td>
+                  <td style={{ padding: 5, border: "1px solid #dee2e6" }}>{value || "Ma'lumot yo'q"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {info.mineralizatsiya_base64 && (
+            <div style={{ marginTop: 8, textAlign: "center" }}>
+              <b>Mineralizatsiya:</b><br />
+              <img src={info.mineralizatsiya_base64} alt="Mineralizatsiya"
+                style={{ maxWidth: 400, maxHeight: 300, marginTop: 5, borderRadius: 5 }} />
+            </div>
+          )}
+          {well.anomalous ? (
+            <p style={{ marginTop: 8, color: "#dc3545", fontWeight: "bold" }}>
+              ⚠️ Anomaliya: {well.params.join(", ")}
+            </p>
+          ) : (
+            <p style={{ marginTop: 8, color: "#198754", fontStyle: "italic" }}>
+              Anomaliya topilmadi
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   GRAFIK — eski create_anomaly_chart bilan bir xil ko'rinish:
+   ko'k asosiy chiziq, UB (yashil) / Mean (magenta) / LB (ko'k)
+   punktir chegaralari, chegaradan chiqqan bo'laklar QALIN QIZIL
+   CHIZIQ (chetlari interpolatsiya bilan aniq kesishish nuqtasida),
+   o'ng o'qda zilzila ustunlari (masofa bilan), x o'qida ±10 kun.
+   ============================================================ */
+function AnomalyChart({ result, sigma }) {
+  const sigmaLabel = Number(sigma ?? 2).toString();
+
+  // Zilzila ustunlari (stem): har biri 0 dan Mb gacha, orasida null bilan uziladi
+  const eqTrace = useMemo(() => {
+    const eqs = result.earthquakes || [];
+    if (!eqs.length) return null;
+    const x = [], y = [], text = [];
+    for (const eq of eqs) {
+      x.push(eq.datetime, eq.datetime, null);
+      y.push(0, eq.mb, null);
+      text.push("", `M: ${eq.mb.toFixed(2)}, D: ${eq.distance.toFixed(1)} km`, "");
+    }
+    return {
+      x, y, text,
+      type: "scatter", mode: "lines",
+      line: { color: "darkred", width: 2 },
+      name: "Zilzilalar",
+      hoverinfo: "text",
+      yaxis: "y2",
+    };
+  }, [result.earthquakes]);
+
+  const data = useMemo(() => {
+    // Chegara chiziqlari eski grafikdagidek faqat MA'LUMOT oralig'ida chiziladi
+    // (x o'qidagi ±10 kunlik bo'sh joyga cho'zilmaydi)
+    const xr = [result.dates[0], result.dates[result.dates.length - 1]];
+    const traces = [
+      // 1. Asosiy chiziq (ko'k)
+      {
+        x: result.dates, y: result.values,
+        type: "scatter", mode: "lines",
+        name: result.param,
+        line: { color: "blue", width: 1.5 },
+        hovertemplate: "<b>Sana:</b> %{x|%d.%m.%Y}<br><b>Qiymat:</b> %{y:.3f}<extra></extra>",
+      },
+      // 2. Chegaralar: UB yashil, Mean magenta, LB ko'k
+      {
+        x: xr, y: [result.upper, result.upper],
+        type: "scatter", mode: "lines",
+        name: `UB (+${sigmaLabel}σ)`,
+        line: { color: "green", width: 1.5, dash: "dash" },
+        hoverinfo: "skip",
+      },
+      {
+        x: xr, y: [result.mean, result.mean],
+        type: "scatter", mode: "lines",
+        name: "Mean",
+        line: { color: "magenta", width: 1.5, dash: "dash" },
+        hoverinfo: "skip",
+      },
+      {
+        x: xr, y: [result.lower, result.lower],
+        type: "scatter", mode: "lines",
+        name: `LB (-${sigmaLabel}σ)`,
+        line: { color: "blue", width: 1.5, dash: "dash" },
+        hoverinfo: "skip",
+      },
+    ];
+
+    // 3. Anomaliya segmentlari — qalin qizil chiziq, afsonada ko'rsatilmaydi
+    for (const seg of result.segments || []) {
+      traces.push({
+        x: seg.dates, y: seg.values,
+        type: "scatter", mode: "lines",
+        line: { color: "red", width: 3 },
+        showlegend: false,
+        hoverinfo: "skip",
       });
     }
-    return { shapes, annotations };
-  }, [earthquakes, result.dates]);
 
-  const xr = [result.dates[0], result.dates[result.dates.length - 1]];
+    // 4. Zilzilalar (o'ng o'q)
+    if (eqTrace) traces.push(eqTrace);
 
-  const data = [
-    {
-      x: result.dates, y: result.values, type: "scatter", mode: "lines",
-      name: result.param, line: { color: "#0d6efd", width: 1.5 },
-      hovertemplate: "%{x}<br>Qiymat: %{y}<extra></extra>",
-    },
-    { x: xr, y: [result.mean, result.mean], type: "scatter", mode: "lines",
-      name: "O'rtacha", line: { color: "#6c757d", dash: "dash", width: 1 }, hoverinfo: "skip" },
-    { x: xr, y: [result.upper, result.upper], type: "scatter", mode: "lines",
-      name: "+σ chegara", line: { color: "#fd7e14", dash: "dot", width: 1 }, hoverinfo: "skip" },
-    { x: xr, y: [result.lower, result.lower], type: "scatter", mode: "lines",
-      name: "−σ chegara", line: { color: "#fd7e14", dash: "dot", width: 1 }, hoverinfo: "skip" },
-    {
-      x: anomalyPoints.xs, y: anomalyPoints.ys, type: "scatter", mode: "markers",
-      name: "Anomaliya", marker: { color: "#dc3545", size: 7 },
-      hovertemplate: "%{x}<br>Anomal qiymat: %{y}<extra></extra>",
-    },
-  ];
+    return traces;
+  }, [result, sigmaLabel, eqTrace]);
+
+  const layout = useMemo(() => {
+    const l = {
+      title: { text: `<b>${result.well} - ${result.param}</b>` },
+      xaxis: { title: { text: "Sana" }, range: result.x_range, gridcolor: "#DEE2E6" },
+      yaxis: { gridcolor: "#DEE2E6" },
+      hovermode: "x unified",
+      height: 500,
+      // plotly.js'da "plotly_white" nomli shablon yo'q (u plotly.py niki) —
+      // o'sha ko'rinish oq fon + kulrang to'r bilan qo'lda berilgan
+      margin: { l: 60, r: 70, t: 50, b: 45 },
+      plot_bgcolor: "#FFFFFF",
+      paper_bgcolor: "#FFFFFF",
+      font: { size: 11, color: "#212529" },
+    };
+    if (eqTrace) {
+      l.yaxis2 = {
+        title: { text: "Magnituda (Mb)" },
+        overlaying: "y",
+        side: "right",
+        range: [0, result.eq_axis_max],
+        showgrid: false,
+      };
+    }
+    return l;
+  }, [result, eqTrace]);
 
   return (
     <div className="card">
@@ -328,17 +657,7 @@ function AnomalyChart({ result, earthquakes }) {
       </p>
       <Plot
         data={data}
-        layout={{
-          height: 320,
-          margin: { l: 55, r: 15, t: 30, b: 40 },
-          shapes, annotations,
-          xaxis: { rangeslider: { visible: true, thickness: 0.08 }, gridcolor: "#DEE2E6" },
-          yaxis: { gridcolor: "#DEE2E6" },
-          plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
-          legend: { orientation: "h", y: -0.35 },
-          font: { size: 11, color: "#212529" },
-          hovermode: "closest",
-        }}
+        layout={layout}
         config={{ responsive: true, displaylogo: false, modeBarButtonsToRemove: ["lasso2d", "select2d"] }}
         style={{ width: "100%" }}
         useResizeHandler
