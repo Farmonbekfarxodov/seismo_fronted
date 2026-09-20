@@ -82,9 +82,16 @@ function AnalysisTab() {
     time_period: 6, anomaly_duration: 3, recent_days: 7, sigma: 2.0, magnitude: "",
   });
 
+  // Xaritada anomal skvajina bosilganda — uning grafiklari ro'yxat boshiga chiqadi
+  const [focusedWell, setFocusedWell] = useState(null);
+  const chartsRef = useRef(null);
+
   const analysis = useMutation({
     mutationFn: postAnalyze,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["anomaly-history"] }),
+    onSuccess: () => {
+      setFocusedWell(null);
+      queryClient.invalidateQueries({ queryKey: ["anomaly-history"] });
+    },
   });
 
   function toggle(list, setList, item) {
@@ -105,6 +112,34 @@ function AnalysisTab() {
   }
 
   const result = analysis.data;
+
+  // Tanlangan skvajina grafiklari boshda, qolganlari asl tartibida
+  const orderedResults = useMemo(() => {
+    const list = result?.results ?? [];
+    if (!focusedWell) return list;
+    const first = list.filter((r) => r.skvajina === focusedWell);
+    const rest = list.filter((r) => r.skvajina !== focusedWell);
+    return [...first, ...rest];
+  }, [result, focusedWell]);
+
+  const focusedCount = useMemo(
+    () => (result?.results ?? []).filter((r) => r.skvajina === focusedWell).length,
+    [result, focusedWell]
+  );
+
+  // Markerga bosilsa — faqat tartib o'zgaradi (xarita joyida qoladi,
+  // popup ham ochiq turadi). Sahifani siljitish popup'dagi tugma orqali.
+  function handleWellClick(name) {
+    // Xuddi shu markerga qayta bosilsa — tartib asl holiga qaytadi
+    setFocusedWell((prev) => (prev === name ? null : name));
+  }
+
+  function handleGoToChart(name) {
+    setFocusedWell(name);
+    requestAnimationFrame(() => {
+      chartsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
@@ -222,7 +257,11 @@ function AnalysisTab() {
           </div>
         )}
 
-        {result && <AnomalyMap map={result.map} layers={layers.data} />}
+        {result && (
+          <AnomalyMap map={result.map} layers={layers.data}
+            focusedWell={focusedWell} onWellClick={handleWellClick}
+            onGoToChart={handleGoToChart} />
+        )}
 
         {result?.results?.length === 0 && (
           <div className="card">
@@ -232,11 +271,29 @@ function AnalysisTab() {
           </div>
         )}
 
-        {result?.results?.map((r) => (
-          <LazyRender key={`${r.well}-${r.param}`} height={540}>
-            <AnomalyChart result={r} sigma={result.meta.sigma} />
-          </LazyRender>
-        ))}
+        <div ref={chartsRef} className="space-y-6 scroll-mt-4">
+          {focusedWell && (
+            <div className="card border-amber/40 bg-amber/5 flex items-center justify-between gap-4">
+              <p className="text-sm">
+                <span className="font-semibold text-amber">{focusedWell}</span>{" "}
+                {focusedCount > 0
+                  ? `grafiklari birinchi o'ringa chiqarildi (${focusedCount} ta)`
+                  : "uchun grafik yo'q — bu skvajinada anomaliya topilmagan"}
+              </p>
+              <button onClick={() => setFocusedWell(null)}
+                className="text-xs font-medium px-2.5 py-1 rounded-md border border-border text-muted hover:text-ink-100 shrink-0">
+                Tartibni tiklash
+              </button>
+            </div>
+          )}
+
+          {orderedResults.map((r) => (
+            <LazyRender key={`${r.well}-${r.param}`} height={540}>
+              <AnomalyChart result={r} sigma={result.meta.sigma}
+                focused={r.skvajina === focusedWell} />
+            </LazyRender>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -273,15 +330,22 @@ function normalIcon(size = 6) {
   });
 }
 
-/* Anomal skvajina — qizil uchburchak + pulsatsiyalanuvchi halqa */
-function anomalousIcon() {
+/* Anomal skvajina — qizil uchburchak + pulsatsiyalanuvchi halqa.
+   `focused` bo'lsa (grafigi birinchi o'ringa chiqarilgan) sariq gardish qo'shiladi. */
+function anomalousIcon(focused = false) {
+  const ring = focused
+    ? `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border:3px solid #f59e0b;border-radius:50%;box-shadow:0 0 6px rgba(245,158,11,0.9);"></div>`
+    : "";
   return L.divIcon({
     className: "",
     html: `
-      <div style="position:relative;">
+      <div style="position:relative;cursor:pointer;">
+        ${ring}
         <div class="anomaly-pulse" style="width:20px;height:20px;background-color:rgba(255,0,0,0.6);border-radius:50%;"></div>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:16px solid red;"></div>
       </div>`,
+    // v1 folium DivIcon bilan bir xil o'lcham/langar — gardish tashqariga
+    // chiqib turadi, marker esa joyidan siljimaydi
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   });
@@ -296,7 +360,7 @@ const PULSE_CSS = `
 .zone-label { background: transparent; border: none; box-shadow: none; font-weight: 600; }
 `;
 
-function AnomalyMap({ map, layers }) {
+function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
   const wrapRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -424,13 +488,16 @@ function AnomalyMap({ map, layers }) {
           <LayersControl.Overlay checked name="⚠️ Anomal skvajinalar">
             <LayerGroup>
               {anomalous.map((w) => (
-                <Marker key={w.name} position={[w.lat, w.lon]} icon={anomalousIcon()}>
+                <Marker key={w.name} position={[w.lat, w.lon]}
+                  icon={anomalousIcon(w.name === focusedWell)}
+                  eventHandlers={{ click: () => onWellClick?.(w.name) }}>
                   <LTooltip>
                     <b>{w.name}</b><br />
-                    <span style={{ color: "red" }}>⚠️ Anomaliya: {w.params.join(", ")}</span>
+                    <span style={{ color: "red" }}>⚠️ Anomaliya: {w.params.join(", ")}</span><br />
+                    <span style={{ color: "#6c757d" }}>Grafigini birinchi o'ringa chiqarish uchun bosing</span>
                   </LTooltip>
                   <Popup maxWidth={480}>
-                    <WellInfoPopup well={w} />
+                    <WellInfoPopup well={w} onGoToChart={onGoToChart} />
                   </Popup>
                 </Marker>
               ))}
@@ -468,7 +535,7 @@ function Tri({ c }) {
 
 /* Popup ochilganda skvajina ma'lumotini yuklaydi (well-info endpoint) —
    eski folium popup'idagi jadvalning aynan o'zi, mineralizatsiya rasmi bilan. */
-function WellInfoPopup({ well }) {
+function WellInfoPopup({ well, onGoToChart }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["well-info", well.name],
     queryFn: async () => {
@@ -493,6 +560,18 @@ function WellInfoPopup({ well }) {
   return (
     <div style={{ width: 420, fontFamily: "Arial", fontSize: 12 }}>
       <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>Skvajina ma'lumotlari</h4>
+
+      {well.anomalous && onGoToChart && (
+        <button onClick={() => onGoToChart(well.name)}
+          style={{
+            marginBottom: 8, padding: "5px 10px", cursor: "pointer",
+            border: "1px solid #fd7e14", borderRadius: 5,
+            background: "#fd7e14", color: "white",
+            fontWeight: "bold", fontSize: 12,
+          }}>
+          ↓ Grafigiga o'tish
+        </button>
+      )}
 
       {isLoading && <p>Yuklanmoqda...</p>}
       {isError && <p style={{ color: "#dc3545" }}>Ma'lumotni yuklab bo'lmadi</p>}
@@ -537,7 +616,7 @@ function WellInfoPopup({ well }) {
    CHIZIQ (chetlari interpolatsiya bilan aniq kesishish nuqtasida),
    o'ng o'qda zilzila ustunlari (masofa bilan), x o'qida ±10 kun.
    ============================================================ */
-function AnomalyChart({ result, sigma }) {
+function AnomalyChart({ result, sigma, focused = false }) {
   const sigmaLabel = Number(sigma ?? 2).toString();
 
   // Zilzila ustunlari (stem): har biri 0 dan Mb gacha, orasida null bilan uziladi
@@ -641,9 +720,10 @@ function AnomalyChart({ result, sigma }) {
   }, [result, eqTrace]);
 
   return (
-    <div className="card">
+    <div className={`card ${focused ? "ring-2 ring-amber border-amber/50" : ""}`}>
       <div className="flex items-baseline justify-between mb-1">
         <h3 className="text-base">
+          {focused && <span className="text-amber mr-1.5" title="Xaritada tanlangan">●</span>}
           {result.well} — <span className="text-teal font-mono">{result.param}</span>
         </h3>
         <p className="text-xs text-amber font-mono">{result.anomalies.length} ta anomaliya</p>
