@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const BASE = "/catalog-list";
 
@@ -12,6 +13,7 @@ async function fetchCatalog({ queryKey }) {
 }
 
 export default function Catalog() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -48,7 +50,7 @@ export default function Catalog() {
       setFeedback({ ok: true, text: data.message });
       queryClient.invalidateQueries({ queryKey: ["catalog"] });
     } catch (err) {
-      setFeedback({ ok: false, text: err.response?.data?.message || "Xatolik yuz berdi" });
+      setFeedback({ ok: false, text: err.response?.data?.message || t("Xatolik yuz berdi") });
     } finally {
       setBusy(null);
     }
@@ -67,11 +69,14 @@ export default function Catalog() {
       });
       setFeedback({
         ok: data.success,
-        text: `${data.added} ta qo'shildi${data.error_count ? `, ${data.error_count} ta xato` : ""}`,
+        text: t("{added} ta qo'shildi{errors}", {
+          added: data.added,
+          errors: data.error_count ? t(", {count} ta xato", { count: data.error_count }) : "",
+        }),
       });
       queryClient.invalidateQueries({ queryKey: ["catalog"] });
     } catch (err) {
-      setFeedback({ ok: false, text: err.response?.data?.message || "Xatolik yuz berdi" });
+      setFeedback({ ok: false, text: err.response?.data?.message || t("Xatolik yuz berdi") });
     } finally {
       setBusy(null);
       e.target.value = "";
@@ -91,7 +96,7 @@ export default function Catalog() {
       const errors = err.response?.data?.errors;
       setFeedback({
         ok: false,
-        text: errors ? Object.values(errors).flat().join(", ") : "Xatolik yuz berdi",
+        text: errors ? Object.values(errors).flat().join(", ") : t("Xatolik yuz berdi"),
       });
     } finally {
       setBusy(null);
@@ -102,19 +107,22 @@ return (
     <div>
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">Zilzilalar katalogi</h1>
+          <h1 className="text-xl font-semibold">{t("Zilzilalar katalogi")}</h1>
           <p className="text-sm text-muted mt-1">
-            Umumiy baza: {data && `${data.start_date ?? "—"} dan ${data.end_date ?? "—"} gacha`}
+            {t("Umumiy baza:")} {data && t("{start} dan {end} gacha", {
+              start: data.start_date ?? "—",
+              end: data.end_date ?? "—",
+            })}
           </p>
         </div>
 
         {/* Yuqoridagi tugmalar (API'dan yangilash, Fayldan yuklash) */}
         <div className="flex gap-2">
           <button className="btn-secondary" onClick={handleFetchFromApi} disabled={busy === "api"}>
-            {busy === "api" ? "Yuklanmoqda..." : "API'dan yangilash"}
+            {busy === "api" ? t("Yuklanmoqda...") : t("API'dan yangilash")}
           </button>
           <label className="btn-primary cursor-pointer">
-            {busy === "file" ? "Yuklanmoqda..." : "Fayldan yuklash"}
+            {busy === "file" ? t("Yuklanmoqda...") : t("Fayldan yuklash")}
             <input type="file" accept=".csv,.xlsx,.xls" hidden onChange={handleFileUpload} disabled={busy === "file"} />
           </label>
         </div>
@@ -124,22 +132,22 @@ return (
       <div className="card mb-6 p-4">
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-end gap-4">
           <div className="flex-1 w-full">
-            <label className="label">Boshlanish sanasi</label>
+            <label className="label">{t("Boshlanish sanasi")}</label>
             <input type="date" className="input-field" value={searchDates.start}
               onChange={(e) => setSearchDates({ ...searchDates, start: e.target.value })} />
           </div>
           <div className="flex-1 w-full">
-            <label className="label">Tugash sanasi</label>
+            <label className="label">{t("Tugash sanasi")}</label>
             <input type="date" className="input-field" value={searchDates.end}
               onChange={(e) => setSearchDates({ ...searchDates, end: e.target.value })} />
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button type="submit" className="btn-primary flex-1 sm:flex-none">
-              Qidirish
+              {t("Qidirish")}
             </button>
             {(activeSearch.start || activeSearch.end) && (
               <button type="button" onClick={handleClearSearch} className="btn-secondary flex-1 sm:flex-none">
-                Tozalash
+                {t("Tozalash")}
               </button>
             )}
           </div>
@@ -155,15 +163,17 @@ return (
           {/* Sarlavha: agar filter qilingan bo'lsa natijalar soni ko'rinadi */}
           <div className="px-4 py-3 border-b border-border bg-ink-900 flex justify-between items-center">
             <h3 className="text-sm font-semibold">
-              {data?.filtered ? `Qidiruv natijalari (${data.count} ta)` : "So'nggi 20 ta yozuv"}
+              {data?.filtered
+                ? t("Qidiruv natijalari ({count} ta)", { count: data.count })
+                : t("So'nggi 20 ta yozuv")}
             </h3>
           </div>
 
-          {isLoading && <p className="text-sm text-muted p-4">Yuklanmoqda...</p>}
-          {isError && <p className="text-sm text-danger p-4">Ma'lumotni yuklab bo'lmadi</p>}
+          {isLoading && <p className="text-sm text-muted p-4">{t("Yuklanmoqda...")}</p>}
+          {isError && <p className="text-sm text-danger p-4">{t("Ma'lumotni yuklab bo'lmadi")}</p>}
 
           {data?.records?.length === 0 && !isLoading && (
-             <p className="text-sm text-muted p-4">Berilgan sanalar oralig'ida zilzilalar topilmadi.</p>
+             <p className="text-sm text-muted p-4">{t("Berilgan sanalar oralig'ida zilzilalar topilmadi.")}</p>
           )}
 
           {data?.records?.length > 0 && (
@@ -171,12 +181,12 @@ return (
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b border-border text-left text-muted">
-                    <th className="px-4 py-3 font-medium">Sana</th>
-                    <th className="px-4 py-3 font-medium">Vaqt</th>
-                    <th className="px-4 py-3 font-medium">Kenglik/Uzunlik</th>
-                    <th className="px-4 py-3 font-medium">Chuqurlik</th>
+                    <th className="px-4 py-3 font-medium">{t("Sana")}</th>
+                    <th className="px-4 py-3 font-medium">{t("Vaqt")}</th>
+                    <th className="px-4 py-3 font-medium">{t("Kenglik/Uzunlik")}</th>
+                    <th className="px-4 py-3 font-medium">{t("Chuqurlik")}</th>
                     <th className="px-4 py-3 font-medium">Mb</th>
-                    <th className="px-4 py-3 font-medium">Epitsentr</th>
+                    <th className="px-4 py-3 font-medium">{t("Epitsentr")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -198,7 +208,7 @@ return (
 
         {/* Qo'lda kiritish formasi (o'z holicha) */}
         <form onSubmit={handleManualSubmit} className="card space-y-3 h-fit">
-          <p className="label">Qo'lda kiritish</p>
+          <p className="label">{t("Qo'lda kiritish")}</p>
           <div className="grid grid-cols-2 gap-3">
             <input type="date" required className="input-field" value={manualForm.event_date}
               onChange={(e) => setManualForm({ ...manualForm, event_date: e.target.value })} />
@@ -206,21 +216,21 @@ return (
               onChange={(e) => setManualForm({ ...manualForm, event_time: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <input type="number" step="any" required placeholder="Kenglik" className="input-field" value={manualForm.latitude}
+            <input type="number" step="any" required placeholder={t("Kenglik")} className="input-field" value={manualForm.latitude}
               onChange={(e) => setManualForm({ ...manualForm, latitude: e.target.value })} />
-            <input type="number" step="any" required placeholder="Uzunlik" className="input-field" value={manualForm.longitude}
+            <input type="number" step="any" required placeholder={t("Uzunlik")} className="input-field" value={manualForm.longitude}
               onChange={(e) => setManualForm({ ...manualForm, longitude: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <input type="number" step="any" required placeholder="Chuqurlik (km)" className="input-field" value={manualForm.depth}
+            <input type="number" step="any" required placeholder={t("Chuqurlik (km)")} className="input-field" value={manualForm.depth}
               onChange={(e) => setManualForm({ ...manualForm, depth: e.target.value })} />
-            <input type="number" step="any" required placeholder="Magnitud" className="input-field" value={manualForm.magnitude}
+            <input type="number" step="any" required placeholder={t("Magnitud")} className="input-field" value={manualForm.magnitude}
               onChange={(e) => setManualForm({ ...manualForm, magnitude: e.target.value })} />
           </div>
-          <input placeholder="Epitsentr" className="input-field" value={manualForm.epicenter}
+          <input placeholder={t("Epitsentr")} className="input-field" value={manualForm.epicenter}
             onChange={(e) => setManualForm({ ...manualForm, epicenter: e.target.value })} />
           <button type="submit" className="btn-primary w-full" disabled={busy === "manual"}>
-            {busy === "manual" ? "Saqlanmoqda..." : "Qo'shish"}
+            {busy === "manual" ? t("Saqlanmoqda...") : t("Qo'shish")}
           </button>
         </form>
       </div>

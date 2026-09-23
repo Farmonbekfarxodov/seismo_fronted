@@ -4,6 +4,7 @@ import Plotly from "plotly.js-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -31,6 +32,7 @@ async function fetchEarthquakes(minMag) {
 const LINE_COLORS = ["#0d6efd", "#198754", "#fd7e14", "#dc3545", "#6f42c1"];
 
 export default function Magnitka() {
+  const { t } = useLanguage();
   const [selectedIds, setSelectedIds] = useState([]);
   const [dates, setDates] = useState({ start: "", end: "" });
   // Eski sahifadagi "Magnitudalarni ko'rsatish" opsiyasi
@@ -82,22 +84,22 @@ export default function Magnitka() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl">Magnitka o'lchovlari</h1>
+        <h1 className="text-xl">{t("Magnitka o'lchovlari")}</h1>
         <p className="text-sm text-muted mt-1">
-          Stansiyalarni tanlang va o'lchov dinamikasini solishtiring
+          {t("Stansiyalarni tanlang va o'lchov dinamikasini solishtiring")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="card lg:col-span-1 h-fit">
-          <p className="label mb-3">Stansiyalar</p>
+          <p className="label mb-3">{t("Stansiyalar")}</p>
 
           {stationsQuery.isLoading && (
-            <p className="text-sm text-muted">Yuklanmoqda...</p>
+            <p className="text-sm text-muted">{t("Yuklanmoqda...")}</p>
           )}
           {stationsQuery.isError && (
             <p className="text-sm text-danger">
-              Stansiyalarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.
+              {t("Stansiyalarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.")}
             </p>
           )}
 
@@ -108,7 +110,7 @@ export default function Magnitka() {
                 onChange={(e) =>
                   setSelectedIds(e.target.checked ? stationsQuery.data.map((s) => s.id) : [])
                 } />
-              Hammasini tanlash
+              {t("Hammasini tanlash")}
             </label>
           )}
 
@@ -126,28 +128,28 @@ export default function Magnitka() {
 
           <div className="mt-4 pt-4 border-t border-border space-y-3">
             <div>
-              <label className="label">Boshlanish sanasi</label>
+              <label className="label">{t("Boshlanish sanasi")}</label>
               <input type="date" className="input-field" value={dates.start}
                 onChange={(e) => setDates({ ...dates, start: e.target.value })} />
             </div>
             <div>
-              <label className="label">Tugash sanasi</label>
+              <label className="label">{t("Tugash sanasi")}</label>
               <input type="date" className="input-field" value={dates.end}
                 onChange={(e) => setDates({ ...dates, end: e.target.value })} />
             </div>
             <p className="text-xs text-muted">
-              Sanalar tanlanmasa, stantsiyaning barcha ma'lumotlari ko'rsatiladi
+              {t("Sanalar tanlanmasa, stantsiyaning barcha ma'lumotlari ko'rsatiladi")}
             </p>
 
             {/* Eski sahifadagi zilzila opsiyalari */}
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" className="accent-teal" checked={showMag}
                 onChange={(e) => setShowMag(e.target.checked)} />
-              Magnitudalarni ko'rsatish
+              {t("Magnitudalarni ko'rsatish")}
             </label>
             {showMag && (
               <div>
-                <label className="label">Min magnituda</label>
+                <label className="label">{t("Min magnituda")}</label>
                 <input type="number" step="0.1" className="input-field" value={minMag}
                   onChange={(e) => setMinMag(Number(e.target.value))} />
               </div>
@@ -158,17 +160,20 @@ export default function Magnitka() {
         <div className="card lg:col-span-3">
           {selectedIds.length === 0 && (
             <p className="text-sm text-muted py-16 text-center">
-              Grafikni ko'rish uchun kamida bitta stansiya tanlang
+              {t("Grafikni ko'rish uchun kamida bitta stansiya tanlang")}
             </p>
           )}
 
           {measurementsQuery.isFetching && selectedIds.length > 0 && (
-            <p className="text-sm text-muted">Ma'lumot yuklanmoqda...</p>
+            <p className="text-sm text-muted">{t("Ma'lumot yuklanmoqda...")}</p>
           )}
 
           {showMag && eqInRange.length > 0 && (
             <p className="text-sm text-muted mb-2">
-              🌋 Magnitudalar ko'rsatilmoqda (≥ M{minMag}, {eqInRange.length} ta zilzila)
+              {t("🌋 Magnitudalar ko'rsatilmoqda (≥ M{mag}, {count} ta zilzila)", {
+                mag: minMag,
+                count: eqInRange.length,
+              })}
             </p>
           )}
 
@@ -189,6 +194,7 @@ export default function Magnitka() {
    Yangibozor: 10-minutlik o'rtacha qiymatlar (deltasiz).
    Boshqalar: Δ = qiymat − Yangibozor (bir xil vaqtda). */
 function StationChart({ st, color, earthquakes, baseStation }) {
+  const { t } = useLanguage();
   const chartId = `mag-chart-${st.station_id}`;
 
   if (st.no_match) {
@@ -196,7 +202,7 @@ function StationChart({ st, color, earthquakes, baseStation }) {
       <div className="card">
         <h3 className="text-base font-semibold text-teal mb-2">{st.station_name}</h3>
         <p className="text-sm text-muted">
-          {baseStation} bilan mos vaqtli o'lchov topilmadi — grafik chizilmadi.
+          {t("{base} bilan mos vaqtli o'lchov topilmadi — grafik chizilmadi.", { base: baseStation })}
         </p>
       </div>
     );
@@ -212,7 +218,9 @@ function StationChart({ st, color, earthquakes, baseStation }) {
     text: `M${eq.magnitude}`, font: { size: 9, color: "#dc3545" },
   }));
 
-  const yTitle = st.is_delta ? `Δ (farq, ${baseStation} ga nisbatan)` : "Qiymat";
+  const yTitle = st.is_delta
+    ? t("Δ (farq, {base} ga nisbatan)", { base: baseStation })
+    : t("Qiymat");
 
   function downloadPng() {
     const el = document.getElementById(chartId)?.querySelector(".js-plotly-plot");
@@ -231,18 +239,18 @@ function StationChart({ st, color, earthquakes, baseStation }) {
           {st.station_name}
           {st.is_base && (
             <span className="ml-2 text-xs font-normal text-muted">
-              (baza stantsiya — 10 minutlik o'rtacha)
+              {t("(baza stantsiya — 10 minutlik o'rtacha)")}
             </span>
           )}
           {st.is_delta && (
             <span className="ml-2 text-xs font-normal text-muted">
-              (Δ — {baseStation} ga nisbatan)
+              {t("(Δ — {base} ga nisbatan)", { base: baseStation })}
             </span>
           )}
         </h3>
         <button onClick={downloadPng}
           className="px-3 py-1.5 text-sm rounded-md border border-teal text-teal hover:bg-blue-50 transition-colors">
-          Grafikni yuklash (PNG)
+          {t("Grafikni yuklash (PNG)")}
         </button>
       </div>
       <div className="p-2" id={chartId}>
@@ -252,7 +260,7 @@ function StationChart({ st, color, earthquakes, baseStation }) {
             type: "scatter", mode: "lines",
             name: st.station_name,
             line: { color, width: 1.4 },
-            hovertemplate: `%{x}<br>${st.is_delta ? "Δ" : "Qiymat"}: %{y}<extra></extra>`,
+            hovertemplate: `%{x}<br>${st.is_delta ? "Δ" : t("Qiymat")}: %{y}<extra></extra>`,
           }]}
           layout={{
             height: 360,

@@ -4,6 +4,7 @@ import Plotly from "plotly.js-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -18,6 +19,7 @@ async function postEpoch(payload) {
 }
 
 export default function EpochAnalysis() {
+  const { t } = useLanguage();
   const options = useQuery({ queryKey: ["seismos-options"], queryFn: fetchOptions });
 
   const [selectedKeys, setSelectedKeys] = useState([]);
@@ -57,21 +59,20 @@ export default function EpochAnalysis() {
 
   return (
     <div>
-      {options.isLoading && <p className="text-sm text-muted">Yuklanmoqda...</p>}
+      {options.isLoading && <p className="text-sm text-muted">{t("Yuklanmoqda...")}</p>}
       {options.isError && (
         <p className="text-sm text-danger">
-          Boshlang'ich ma'lumotlarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.
+          {t("Boshlang'ich ma'lumotlarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.")}
         </p>
       )}
 
       {options.data && (
         <>
           <h1 className="text-2xl md:text-3xl text-center tracking-wide mb-2 mt-4">
-            ZILZILA TAHLILI
+            {t("ZILZILA TAHLILI")}
           </h1>
           <p className="text-sm text-muted text-center mb-6">
-            Har bir topilgan zilzila uchun alohida grafik: zilzila kuni — 0,
-            chapda undan oldingi, o'ngda keyingi kunlar
+            {t("Har bir topilgan zilzila uchun alohida grafik: zilzila kuni — 0, chapda undan oldingi, o'ngda keyingi kunlar")}
           </p>
 
           <div className="card border-l-4 border-l-teal max-w-4xl mx-auto mb-6">
@@ -79,7 +80,7 @@ export default function EpochAnalysis() {
               {/* Skvajinalar */}
               <details className="border border-border rounded-md">
                 <summary className="px-3 py-2.5 cursor-pointer font-semibold text-sm">
-                  Skvajinalar{" "}
+                  {t("Skvajinalar")}{" "}
                   <span className="bg-teal text-white text-xs rounded px-1.5 py-0.5">
                     {selectedKeys.length}
                   </span>
@@ -89,7 +90,7 @@ export default function EpochAnalysis() {
                     <input type="checkbox" className="accent-teal shrink-0"
                       checked={options.data.wells.length > 0 && selectedKeys.length === options.data.wells.length}
                       onChange={(e) => setSelectedKeys(e.target.checked ? [...options.data.wells] : [])} />
-                    Hammasini tanlash
+                    {t("Hammasini tanlash")}
                   </label>
                   {options.data.wells.map((key) => (
                     <label key={key} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
@@ -105,7 +106,7 @@ export default function EpochAnalysis() {
               {/* Parametrlar */}
               <details className="border border-border rounded-md">
                 <summary className="px-3 py-2.5 cursor-pointer font-semibold text-sm">
-                  Parametrlar{" "}
+                  {t("Parametrlar")}{" "}
                   <span className="bg-teal text-white text-xs rounded px-1.5 py-0.5">
                     {selectedParams.length}
                   </span>
@@ -121,7 +122,7 @@ export default function EpochAnalysis() {
                         const all = [...new Set(Object.values(options.data.param_groups).flat())];
                         setSelectedParams(e.target.checked ? all : []);
                       }} />
-                    Hammasini tanlash
+                    {t("Hammasini tanlash")}
                   </label>
                   {Object.entries(options.data.param_groups).map(([group, params]) => (
                     <div key={group} className="mt-1">
@@ -140,7 +141,7 @@ export default function EpochAnalysis() {
               </details>
 
               <div>
-                <label className="label">Min Magnituda</label>
+                <label className="label">{t("Min Magnituda")}</label>
                 <input type="number" step="0.1" className="input-field"
                   value={settings.min_mag}
                   onChange={(e) => setSettings({ ...settings, min_mag: e.target.value })} />
@@ -153,57 +154,56 @@ export default function EpochAnalysis() {
               </div>
 
               <div>
-                <label className="label">Zilziladan necha kun oldin</label>
+                <label className="label">{t("Zilziladan necha kun oldin")}</label>
                 <input type="number" min="1" max="365" className="input-field"
                   value={settings.days_before}
                   onChange={(e) => setSettings({ ...settings, days_before: e.target.value })} />
               </div>
               <div>
-                <label className="label">Zilziladan necha kun keyin</label>
+                <label className="label">{t("Zilziladan necha kun keyin")}</label>
                 <input type="number" min="1" max="365" className="input-field"
                   value={settings.days_after}
                   onChange={(e) => setSettings({ ...settings, days_after: e.target.value })} />
               </div>
 
               <div>
-                <label className="label">Boshlanish</label>
+                <label className="label">{t("Boshlanish")}</label>
                 <input type="date" className="input-field" value={settings.start_date}
                   onChange={(e) => setSettings({ ...settings, start_date: e.target.value })} />
               </div>
               <div>
-                <label className="label">Tugash</label>
+                <label className="label">{t("Tugash")}</label>
                 <input type="date" className="input-field" value={settings.end_date}
                   onChange={(e) => setSettings({ ...settings, end_date: e.target.value })} />
               </div>
             </div>
             <div>
-                <label className="label">Sigma (σ) ko'paytuvchisi</label>
+                <label className="label">{t("Sigma (σ) ko'paytuvchisi")}</label>
                 <input type="number" step="0.1" min="0.1" className="input-field"
                   value={settings.sigma}
                   onChange={(e) => setSettings({ ...settings, sigma: e.target.value })} />
             </div>
             <div>
-                <label className="label">Sigma chiziqlari</label>
+                <label className="label">{t("Sigma chiziqlari")}</label>
                 <label className="flex items-center gap-2 text-sm border border-border rounded-md px-3 py-2 cursor-pointer">
                   <input type="checkbox" className="accent-teal" checked={showSigma}
                     onChange={(e) => setShowSigma(e.target.checked)} />
-                  Grafiklarda ko'rsatilsin
+                  {t("Grafiklarda ko'rsatilsin")}
                 </label>
             </div>
 
             <p className="text-xs text-muted mt-3">
-              Sanalar oralig'i qidiriladigan zilzilalarni cheklaydi. Har bir
-              grafik oynasi esa yuqoridagi kun sonlari bo'yicha chiziladi.
+              {t("Sanalar oralig'i qidiriladigan zilzilalarni cheklaydi. Har bir grafik oynasi esa yuqoridagi kun sonlari bo'yicha chiziladi.")}
             </p>
 
             <button className="btn-primary w-full mt-4 py-2.5"
               disabled={selectedKeys.length === 0 || analysis.isPending}
               onClick={runAnalysis}>
-              {analysis.isPending ? "Tahlil qilinmoqda..." : "Tahlil qilish"}
+              {analysis.isPending ? t("Tahlil qilinmoqda...") : t("Tahlil qilish")}
             </button>
             {analysis.isError && (
               <p className="text-danger text-sm mt-2">
-                {analysis.error?.response?.data?.error || "Tahlilda xatolik yuz berdi"}
+                {analysis.error?.response?.data?.error || t("Tahlilda xatolik yuz berdi")}
               </p>
             )}
           </div>
@@ -213,21 +213,20 @@ export default function EpochAnalysis() {
               <div className="max-w-4xl mx-auto rounded-md px-4 py-3 text-sm flex items-center justify-between flex-wrap gap-3"
                 style={{ background: "#cff4fc", color: "#055160" }}>
                 <span>
-                  Topildi: <b>{result.meta.count}</b> ta grafik
-                  {result.meta.truncated && " (chegara: 200 ta, qolganini ko'rish uchun tanlovni toraytiring)"}
+                  {t("Topildi:")} <b>{result.meta.count}</b> {t("ta grafik")}
+                  {result.meta.truncated && " " + t("(chegara: 200 ta, qolganini ko'rish uchun tanlovni toraytiring)")}
                 </span>
                 <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
                   <input type="checkbox" className="accent-teal" checked={showSigma}
                     onChange={(e) => setShowSigma(e.target.checked)} />
-                  Sigma chiziqlari
+                  {t("Sigma chiziqlari")}
                 </label>
               </div>
 
               {result.charts.length === 0 && (
                 <div className="card">
                   <p className="text-sm text-muted">
-                    Tanlangan shartlarga mos zilzila topilmadi. Magnituda yoki
-                    M/lgR chegarasini pasaytirib ko'ring.
+                    {t("Tanlangan shartlarga mos zilzila topilmadi. Magnituda yoki M/lgR chegarasini pasaytirib ko'ring.")}
                   </p>
                 </div>
               )}
@@ -248,6 +247,7 @@ export default function EpochAnalysis() {
 
 /* Bitta zilzila oynasi grafigi: X — nisbiy kun, 0-da zilzila chizig'i */
 function EpochChart({ chart, showSigma, sigmaFactor }) {
+  const { t } = useLanguage();
   const chartId = `epoch-${chart.key}-${chart.param}-${chart.earthquake.datetime}`
     .replace(/[^a-zA-Z0-9-]/g, "_");
 
@@ -270,7 +270,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
       {
         x: realX, y: realY,
         type: "scatter", mode: "lines",
-        name: "Taxminiy (ma'lumot yo'q)",
+        name: t("Taxminiy (ma'lumot yo'q)"),
         line: { color: "#9db8e8", width: 1.4, dash: "dot" },
         connectgaps: true,
         hoverinfo: "skip",
@@ -280,7 +280,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
       {
         x: chart.offsets, y: chart.values,
         type: "scatter", mode: "lines",
-        name: "Haqiqiy o'lchov",
+        name: t("Haqiqiy o'lchov"),
         line: { color: "#0d6efd", width: 1.8 },
         connectgaps: false,
         hoverinfo: "skip",
@@ -295,7 +295,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
         customdata: realDates,
         hovertemplate:
           "<b>%{customdata}</b><br>" +
-          "Zilziladan: %{x} kun<br>" +
+          `${t("Zilziladan:")} %{x} ${t("kun")}<br>` +
           `${chart.param}: %{y}<extra></extra>`,
         showlegend: false,
       },
@@ -305,7 +305,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
         const m = chart.stats.mean;
         const s = chart.stats.std * sigmaFactor;
         return [
-          { x: xr, y: [m, m], type: "scatter", mode: "lines", name: "O'rtacha",
+          { x: xr, y: [m, m], type: "scatter", mode: "lines", name: t("O'rtacha"),
             line: { color: "#6c757d", dash: "dash", width: 1 }, hoverinfo: "skip" },
           { x: xr, y: [m + s, m + s], type: "scatter", mode: "lines", name: `+${sigmaFactor}σ`,
             line: { color: "#fd7e14", dash: "dot", width: 1 }, hoverinfo: "skip" },
@@ -334,15 +334,15 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
             {chart.key} — {chart.param}
           </h3>
           <p className="text-xs text-muted mt-0.5">
-            Zilzila: {eqDate} · Mb {chart.earthquake.mb}
-            {chart.earthquake.r_km != null && ` · Masofa ${chart.earthquake.r_km} km`}
+            {t("Zilzila:")} {eqDate} · Mb {chart.earthquake.mb}
+            {chart.earthquake.r_km != null && ` · ${t("Masofa")} ${chart.earthquake.r_km} km`}
             {chart.earthquake.mlgr != null && ` · M/lgR ${chart.earthquake.mlgr}`}
-            {" · "}Ma'lumotli kunlar: {chart.points_count}/{chart.offsets.length}
+            {" · "}{t("Ma'lumotli kunlar:")} {chart.points_count}/{chart.offsets.length}
           </p>
         </div>
         <button onClick={downloadPng}
           className="px-3 py-1.5 text-sm rounded-md border border-teal text-teal hover:bg-blue-50 transition-colors">
-          Grafikni yuklash (PNG)
+          {t("Grafikni yuklash (PNG)")}
         </button>
       </div>
       <div className="p-2" id={chartId}>
@@ -352,10 +352,10 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
             height: 420,
             margin: { l: 60, r: 30, t: 30, b: 70 },
             xaxis: {
-              title: { text: "Zilziladan kunlar (0 — zilzila kuni)" },
+              title: { text: t("Zilziladan kunlar (0 — zilzila kuni)") },
               gridcolor: "#DEE2E6", zeroline: false,
             },
-            yaxis: { title: { text: `${chart.param} qiymati` }, gridcolor: "#DEE2E6" },
+            yaxis: { title: { text: t("{param} qiymati", { param: chart.param }) }, gridcolor: "#DEE2E6" },
             shapes: [{
               type: "line", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1,
               line: { color: "#212529", width: 2.5 },

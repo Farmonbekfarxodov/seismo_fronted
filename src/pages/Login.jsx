@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import SeismicWaveform from "../components/SeismicWaveform";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Login() {
   const { register, handleSubmit, formState } = useForm();
@@ -9,6 +10,7 @@ export default function Login() {
   const error = useAuthStore((s) => s.error);
   const isLoading = useAuthStore((s) => s.isLoading);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   async function onSubmit(values) {
     const ok = await login(values.username, values.password);
@@ -20,14 +22,14 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <SeismicWaveform className="w-48 h-10 mx-auto mb-4" tone="teal" />
-          <h1 className="text-2xl font-semibold">Seysmologiya</h1>
-          <p className="text-sm text-muted mt-1">Tizimga kirish</p>
+          <h1 className="text-2xl font-semibold">{t("Seysmologiya")}</h1>
+          <p className="text-sm text-muted mt-1">{t("Tizimga kirish")}</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="card space-y-4">
           <div>
             <label className="label" htmlFor="username">
-              Foydalanuvchi nomi
+              {t("Foydalanuvchi nomi")}
             </label>
             <input
               id="username"
@@ -36,13 +38,13 @@ export default function Login() {
               {...register("username", { required: true })}
             />
             {formState.errors.username && (
-              <p className="text-danger text-xs mt-1">Bu maydon majburiy</p>
+              <p className="text-danger text-xs mt-1">{t("Bu maydon majburiy")}</p>
             )}
           </div>
 
           <div>
             <label className="label" htmlFor="password">
-              Parol
+              {t("Parol")}
             </label>
             <input
               id="password"
@@ -52,7 +54,7 @@ export default function Login() {
               {...register("password", { required: true })}
             />
             {formState.errors.password && (
-              <p className="text-danger text-xs mt-1">Bu maydon majburiy</p>
+              <p className="text-danger text-xs mt-1">{t("Bu maydon majburiy")}</p>
             )}
           </div>
 
@@ -63,7 +65,7 @@ export default function Login() {
             className="btn-primary w-full"
             disabled={isLoading}
           >
-            {isLoading ? "Tekshirilmoqda..." : "Kirish"}
+            {isLoading ? t("Tekshirilmoqda...") : t("Kirish")}
           </button>
         </form>
 

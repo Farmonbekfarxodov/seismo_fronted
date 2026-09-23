@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 
 /**
  * Bolalarni faqat ekranga (yoki unga 400px yaqin) kelganda render qiladi.
@@ -7,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 export default function LazyRender({ height = 480, children }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (visible) return;
@@ -32,7 +34,7 @@ export default function LazyRender({ height = 480, children }) {
     <div ref={ref} style={{ minHeight: visible ? undefined : height }}>
       {visible ? children : (
         <div className="card flex items-center justify-center" style={{ height }}>
-          <p className="text-sm text-muted">Grafik tayyorlanmoqda...</p>
+          <p className="text-sm text-muted">{t("Grafik tayyorlanmoqda...")}</p>
         </div>
       )}
     </div>

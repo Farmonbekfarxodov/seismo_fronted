@@ -4,6 +4,7 @@ import Plotly from "plotly.js-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -18,6 +19,7 @@ async function postAnalyze(payload) {
 }
 
 export default function Informativlik() {
+  const { t } = useLanguage();
   const options = useQuery({ queryKey: ["inf-options"], queryFn: fetchOptions });
 
   const [wells, setWells] = useState([]);
@@ -79,15 +81,15 @@ export default function Informativlik() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold">Informativlik tahlili</h1>
+        <h1 className="text-xl font-semibold">{t("Informativlik tahlili")}</h1>
         <p className="text-sm text-muted mt-1">
-          Parametrlarning zilzila oldi anomaliyalarini ko'rsatish qobiliyatini baholash
+          {t("Parametrlarning zilzila oldi anomaliyalarini ko'rsatish qobiliyatini baholash")}
         </p>
       </div>
 
-      {options.isLoading && <p className="text-sm text-muted">Yuklanmoqda...</p>}
+      {options.isLoading && <p className="text-sm text-muted">{t("Yuklanmoqda...")}</p>}
       {options.isError && (
-        <p className="text-sm text-danger">Boshlang'ich ma'lumotlarni yuklab bo'lmadi.</p>
+        <p className="text-sm text-danger">{t("Boshlang'ich ma'lumotlarni yuklab bo'lmadi.")}</p>
       )}
 
       {options.data && (
@@ -95,12 +97,12 @@ export default function Informativlik() {
           {/* Tanlash paneli */}
           <div className="space-y-4 xl:col-span-1">
             <div className="card">
-              <p className="label mb-2">Skvajinalar ({wells.length})</p>
+              <p className="label mb-2">{t("Skvajinalar ({count})", { count: wells.length })}</p>
               <label className="flex items-center gap-2 text-sm py-1 px-1.5 mb-1 border-b border-border cursor-pointer font-medium">
                 <input type="checkbox" className="accent-teal shrink-0"
                   checked={options.data.wells.length > 0 && wells.length === options.data.wells.length}
                   onChange={(e) => setWells(e.target.checked ? [...options.data.wells] : [])} />
-                Hammasini tanlash
+                {t("Hammasini tanlash")}
               </label>
               <div className="max-h-44 overflow-y-auto space-y-1">
                 {options.data.wells.map((w) => (
@@ -114,12 +116,12 @@ export default function Informativlik() {
             </div>
 
             <div className="card">
-              <p className="label mb-2">Parametrlar ({params.length})</p>
+              <p className="label mb-2">{t("Parametrlar ({count})", { count: params.length })}</p>
               <label className="flex items-center gap-2 text-sm py-1 px-1.5 mb-2 border-b border-border cursor-pointer font-medium">
                 <input type="checkbox" className="accent-teal shrink-0"
                   checked={options.data.params.length > 0 && params.length === options.data.params.length}
                   onChange={(e) => setParams(e.target.checked ? [...options.data.params] : [])} />
-                Hammasini tanlash
+                {t("Hammasini tanlash")}
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {options.data.params.map((p) => (
@@ -136,34 +138,34 @@ export default function Informativlik() {
             </div>
 
             <div className="card space-y-3">
-              <p className="label">Sozlamalar</p>
-              <Num label="Oyna (yil)" v={settings.window_years} set={(v) => setSettings({ ...settings, window_years: v })} />
+              <p className="label">{t("Sozlamalar")}</p>
+              <Num label={t("Oyna (yil)")} v={settings.window_years} set={(v) => setSettings({ ...settings, window_years: v })} />
               <div className="grid grid-cols-2 gap-3">
-                <Num label="Anom. davomiyligi" v={settings.anomaly_duration} set={(v) => setSettings({ ...settings, anomaly_duration: v })} />
-                <Num label="Std faktor (σ)" step="0.1" v={settings.std_factor} set={(v) => setSettings({ ...settings, std_factor: v })} />
+                <Num label={t("Anom. davomiyligi")} v={settings.anomaly_duration} set={(v) => setSettings({ ...settings, anomaly_duration: v })} />
+                <Num label={t("Std faktor (σ)")} step="0.1" v={settings.std_factor} set={(v) => setSettings({ ...settings, std_factor: v })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Num label="Oldin (kun)" v={settings.timedelta_before} set={(v) => setSettings({ ...settings, timedelta_before: v })} />
-                <Num label="Keyin (kun)" v={settings.timedelta_after} set={(v) => setSettings({ ...settings, timedelta_after: v })} />
+                <Num label={t("Oldin (kun)")} v={settings.timedelta_before} set={(v) => setSettings({ ...settings, timedelta_before: v })} />
+                <Num label={t("Keyin (kun)")} v={settings.timedelta_after} set={(v) => setSettings({ ...settings, timedelta_after: v })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Num label="Min Mb" step="0.1" v={settings.min_mag} set={(v) => setSettings({ ...settings, min_mag: v })} />
                 <Num label="Min M/lgR" step="0.1" v={settings.min_mlgr} set={(v) => setSettings({ ...settings, min_mlgr: v })} />
               </div>
               <div>
-                <label className="label">Median oynasi (ixtiyoriy)</label>
-                <input type="number" min="1" className="input-field" placeholder="Bo'sh — median yo'q"
+                <label className="label">{t("Median oynasi (ixtiyoriy)")}</label>
+                <input type="number" min="1" className="input-field" placeholder={t("Bo'sh — median yo'q")}
                   value={settings.median_window}
                   onChange={(e) => setSettings({ ...settings, median_window: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Boshlanish</label>
+                  <label className="label">{t("Boshlanish")}</label>
                   <input type="date" className="input-field" value={settings.start_date}
                     onChange={(e) => setSettings({ ...settings, start_date: e.target.value })} />
                 </div>
                 <div>
-                  <label className="label">Tugash</label>
+                  <label className="label">{t("Tugash")}</label>
                   <input type="date" className="input-field" value={settings.end_date}
                     onChange={(e) => setSettings({ ...settings, end_date: e.target.value })} />
                 </div>
@@ -171,11 +173,11 @@ export default function Informativlik() {
               <button className="btn-primary w-full"
                 disabled={wells.length === 0 || params.length === 0 || analysis.isPending}
                 onClick={run}>
-                {analysis.isPending ? "Hisoblanmoqda..." : "Tahlilni boshlash"}
+                {analysis.isPending ? t("Hisoblanmoqda...") : t("Tahlilni boshlash")}
               </button>
               {analysis.isError && (
                 <p className="text-danger text-sm">
-                  {analysis.error?.response?.data?.error || "Tahlilda xatolik yuz berdi"}
+                  {analysis.error?.response?.data?.error || t("Tahlilda xatolik yuz berdi")}
                 </p>
               )}
             </div>
@@ -188,10 +190,10 @@ export default function Informativlik() {
                 <div className="card p-0 overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <p className="text-sm font-semibold text-ink-50">
-                      Natijalar jadvali <span className="text-muted font-normal">(q bo'yicha saralangan)</span>
+                      {t("Natijalar jadvali")} <span className="text-muted font-normal">{t("(q bo'yicha saralangan)")}</span>
                     </p>
                     <button className="btn-secondary text-xs py-1.5" onClick={exportExcel} disabled={exporting}>
-                      {exporting ? "Tayyorlanmoqda..." : "Excel yuklab olish"}
+                      {exporting ? t("Tayyorlanmoqda...") : t("Excel yuklab olish")}
                     </button>
                   </div>
                   <div className="overflow-x-auto">
@@ -199,7 +201,7 @@ export default function Informativlik() {
                       <thead>
                         <tr className="border-b border-border text-left text-muted">
                           {["№", "Skvajina", "Parametr", "T", "t", "n", "m", "t/T", "m/n", "Φ(ξ)", "q", "Ishonchlilik", "Informativlik"].map((h) => (
-                            <th key={h} className="px-3 py-2.5 font-medium whitespace-nowrap">{h}</th>
+                            <th key={h} className="px-3 py-2.5 font-medium whitespace-nowrap">{t(h)}</th>
                           ))}
                         </tr>
                       </thead>
@@ -253,6 +255,7 @@ function Num({ label, v, set, step = "1" }) {
 /* Grafik (Plotly, zoom bilan): qiymatlar + sigma chegaralari + zilzilalar
    (tutilganlari ko'k, tutilmaganlari kulrang vertikal chiziqlar) */
 function InfChart({ series }) {
+  const { t } = useLanguage();
   const { shapes, annotations } = useMemo(() => {
     const shapes = [], annotations = [];
     const first = series.dates[0];
@@ -280,10 +283,10 @@ function InfChart({ series }) {
     {
       x: series.dates, y: series.values, type: "scatter", mode: "lines",
       name: series.param, line: { color: "#198754", width: 1.3 },
-      hovertemplate: "%{x}<br>Qiymat: %{y}<extra></extra>",
+      hovertemplate: `%{x}<br>${t("Qiymat")}: %{y}<extra></extra>`,
     },
     { x: xr, y: [series.mean, series.mean], type: "scatter", mode: "lines",
-      name: "O'rtacha", line: { color: "#6c757d", dash: "dash", width: 1 }, hoverinfo: "skip" },
+      name: t("O'rtacha"), line: { color: "#6c757d", dash: "dash", width: 1 }, hoverinfo: "skip" },
     { x: xr, y: [series.mean + series.sigma, series.mean + series.sigma],
       type: "scatter", mode: "lines", name: "+σ",
       line: { color: "#fd7e14", dash: "dot", width: 1 }, hoverinfo: "skip" },
@@ -299,7 +302,10 @@ function InfChart({ series }) {
           {series.key} — <span className="text-teal font-mono">{series.param}</span>
         </h3>
         <p className="text-xs text-muted font-mono">
-          q=<span className="text-amber">{series.q}</span> · {capturedCount}/{series.earthquakes.length} zilzila tutildi
+          q=<span className="text-amber">{series.q}</span> · {t("{captured}/{total} zilzila tutildi", {
+            captured: capturedCount,
+            total: series.earthquakes.length,
+          })}
         </p>
       </div>
       <Plot
@@ -320,8 +326,8 @@ function InfChart({ series }) {
         useResizeHandler
       />
       <p className="text-xs text-muted mt-1">
-        <span className="text-teal">Ko'k chiziq</span> — anomaliya tomonidan "tutilgan" zilzila ·{" "}
-        <span style={{ color: "#adb5bd" }}>Kulrang</span> — tutilmagan
+        <span className="text-teal">{t("Ko'k chiziq")}</span> {t("— anomaliya tomonidan \"tutilgan\" zilzila ·")}{" "}
+        <span style={{ color: "#adb5bd" }}>{t("Kulrang")}</span> {t("— tutilmagan")}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LanguageProvider, useLanguage } from "./i18n/LanguageContext";
 import Layout from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -24,34 +25,39 @@ const queryClient = new QueryClient({
 });
 
 function PageLoader() {
-  return <p className="text-sm text-muted p-8 text-center">Sahifa yuklanmoqda...</p>;
+  const { t } = useLanguage();
+  return <p className="text-sm text-muted p-8 text-center">{t("Sahifa yuklanmoqda...")}</p>;
 }
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ErrorBoundary>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+    // LanguageProvider eng tashqarida — shu orqali ixtiyoriy komponent
+    // useLanguage() bilan joriy til va t() funksiyasiga murojaat qiladi
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/seismos" element={<Seismos />} />
-                <Route path="/epoch" element={<EpochAnalysis />} />
-                <Route path="/magnitka" element={<Magnitka />} />
-                <Route path="/anomaly" element={<Anomaly />} />
-                <Route path="/informativlik" element={<Informativlik />} />
-                <Route path="/catalog" element={<Catalog />} />
-                <Route path="/download-base" element={<DownloadBase />} />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/seismos" element={<Seismos />} />
+                  <Route path="/epoch" element={<EpochAnalysis />} />
+                  <Route path="/magnitka" element={<Magnitka />} />
+                  <Route path="/anomaly" element={<Anomaly />} />
+                  <Route path="/informativlik" element={<Informativlik />} />
+                  <Route path="/catalog" element={<Catalog />} />
+                  <Route path="/download-base" element={<DownloadBase />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
-        </Suspense>
-        </ErrorBoundary>
-      </BrowserRouter>
-    </QueryClientProvider>
+            </Routes>
+          </Suspense>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </LanguageProvider>
   );
 }

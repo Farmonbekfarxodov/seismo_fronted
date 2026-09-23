@@ -1,10 +1,12 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useLanguage } from "../i18n/LanguageContext";
 
 
 export default function Layout() {
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const { lang, toggleLang, t } = useLanguage();
 
   function handleLogout() {
     logout();
@@ -38,12 +40,12 @@ export default function Layout() {
           <div className="flex items-center gap-5">
             <NavLink to="/" className="text-xl font-bold text-teal">Seismo.uz</NavLink>
             {[
-              { to: "/", label: "Umumiy", end: true },
-              { to: "/magnitka", label: "Magnitka" },
-              { to: "/anomaly", label: "Anomaliya" },
-              { to: "/informativlik", label: "Informativlik" },
-              { to: "/catalog", label: "Katalog" },
-              { to: "/epoch", label: "Zilzila tahlili" },
+              { to: "/", label: t("Umumiy"), end: true },
+              { to: "/magnitka", label: t("Magnitka") },
+              { to: "/anomaly", label: t("Anomaliya") },
+              { to: "/informativlik", label: t("Informativlik") },
+              { to: "/catalog", label: t("Katalog") },
+              { to: "/epoch", label: t("Zilzila tahlili") },
             ].map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end}
                 className={({ isActive }) =>
@@ -56,17 +58,23 @@ export default function Layout() {
             ))}
           </div>
           <div className="flex items-center gap-2">
+            {/* Til almashtirish tugmasi — barcha sahifalarda bitta joyda,
+                chunki Layout barcha ichki sahifalarni o'rab turadi */}
+            <button onClick={toggleLang} title="Til / Язык"
+              className="px-3 py-1.5 text-sm font-semibold rounded-md border border-ink-100 text-ink-100 hover:bg-ink-900 transition-colors">
+              {lang === "uz" ? "RU" : "UZ"}
+            </button>
             <NavLink to="/download-base"
               className="px-3 py-1.5 text-sm font-medium rounded-md border border-green-600 text-green-700 hover:bg-green-50 transition-colors">
-              Bazaga yuklash
+              {t("Bazaga yuklash")}
             </NavLink>
             <NavLink to="/seismos"
               className="px-3 py-1.5 text-sm font-medium rounded-md border border-teal text-teal hover:bg-blue-50 transition-colors">
-              GGS tahlili
+              {t("GGS tahlili")}
             </NavLink>
             <button onClick={handleLogout}
               className="px-3 py-1.5 text-sm font-medium rounded-md border border-ink-100 text-ink-100 hover:bg-ink-900 transition-colors">
-              Chiqish
+              {t("Chiqish")}
             </button>
           </div>
         </div>

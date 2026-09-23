@@ -10,6 +10,7 @@ import Plotly from "plotly.js-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -33,29 +34,30 @@ async function fetchLayers() {
 }
 
 export default function Anomaly() {
+  const { t } = useLanguage();
   const [tab, setTab] = useState("analysis");
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold">Anomaliya tahlili</h1>
+        <h1 className="text-xl font-semibold">{t("Anomaliya tahlili")}</h1>
         <p className="text-sm text-muted mt-1">
-          Sigma chegarasidan chetlashgan ketma-ket qiymatlarni aniqlash
+          {t("Sigma chegarasidan chetlashgan ketma-ket qiymatlarni aniqlash")}
         </p>
       </div>
 
       <div className="flex gap-2 mb-6 border-b border-border">
         {[
-          { id: "analysis", label: "Tahlil" },
-          { id: "history", label: "Tarix" },
-        ].map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          { id: "analysis", label: t("Tahlil") },
+          { id: "history", label: t("Tarix") },
+        ].map((tab_) => (
+          <button key={tab_.id} onClick={() => setTab(tab_.id)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === t.id
+              tab === tab_.id
                 ? "border-amber text-amber"
                 : "border-transparent text-muted hover:text-ink-100"
             }`}>
-            {t.label}
+            {tab_.label}
           </button>
         ))}
       </div>
@@ -67,6 +69,7 @@ export default function Anomaly() {
 
 /* ================= TAHLIL ================= */
 function AnalysisTab() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const options = useQuery({ queryKey: ["anomaly-options"], queryFn: fetchOptions });
   // Qatlamlar og'ir (~1MB) — 24 soat keshlanadi, sahifa bilan birga yuklanadi
@@ -145,20 +148,20 @@ function AnalysisTab() {
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
       {/* Tanlash paneli */}
       <div className="space-y-4 xl:col-span-1">
-        {options.isLoading && <p className="text-sm text-muted">Yuklanmoqda...</p>}
+        {options.isLoading && <p className="text-sm text-muted">{t("Yuklanmoqda...")}</p>}
         {options.isError && (
-          <p className="text-sm text-danger">Boshlang'ich ma'lumotlarni yuklab bo'lmadi.</p>
+          <p className="text-sm text-danger">{t("Boshlang'ich ma'lumotlarni yuklab bo'lmadi.")}</p>
         )}
 
         {options.data && (
           <>
             <div className="card">
-              <p className="label mb-2">Quduqlar ({wells.length})</p>
+              <p className="label mb-2">{t("Quduqlar ({count})", { count: wells.length })}</p>
               <label className="flex items-center gap-2 text-sm py-1 px-1.5 mb-1 border-b border-border cursor-pointer font-medium">
                 <input type="checkbox" className="accent-teal shrink-0"
                   checked={options.data.wells.length > 0 && wells.length === options.data.wells.length}
                   onChange={(e) => setWells(e.target.checked ? [...options.data.wells] : [])} />
-                Hammasini tanlash
+                {t("Hammasini tanlash")}
               </label>
               <div className="max-h-48 overflow-y-auto space-y-1">
                 {options.data.wells.map((w) => (
@@ -172,12 +175,12 @@ function AnalysisTab() {
             </div>
 
             <div className="card">
-              <p className="label mb-2">Parametrlar ({params.length})</p>
+              <p className="label mb-2">{t("Parametrlar ({count})", { count: params.length })}</p>
               <label className="flex items-center gap-2 text-sm py-1 px-1.5 mb-2 border-b border-border cursor-pointer font-medium">
                 <input type="checkbox" className="accent-teal shrink-0"
                   checked={options.data.params.length > 0 && params.length === options.data.params.length}
                   onChange={(e) => setParams(e.target.checked ? [...options.data.params] : [])} />
-                Hammasini tanlash
+                {t("Hammasini tanlash")}
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {options.data.params.map((p) => (
@@ -194,17 +197,17 @@ function AnalysisTab() {
             </div>
 
             <div className="card space-y-3">
-              <p className="label">Sozlamalar</p>
+              <p className="label">{t("Sozlamalar")}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Davr (oy)</label>
+                  <label className="label">{t("Davr (oy)")}</label>
                   <select className="input-field" value={settings.time_period}
                     onChange={(e) => setSettings({ ...settings, time_period: e.target.value })}>
                     {options.data.time_periods.map((v) => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="label">Min ketma-ketlik</label>
+                  <label className="label">{t("Min ketma-ketlik")}</label>
                   <select className="input-field" value={settings.anomaly_duration}
                     onChange={(e) => setSettings({ ...settings, anomaly_duration: e.target.value })}>
                     {options.data.durations.map((v) => <option key={v} value={v}>{v}</option>)}
@@ -213,31 +216,31 @@ function AnalysisTab() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Sigma (σ)</label>
+                  <label className="label">{t("Sigma (σ)")}</label>
                   <input type="number" step="0.1" className="input-field" value={settings.sigma}
                     onChange={(e) => setSettings({ ...settings, sigma: e.target.value })} />
                 </div>
                 <div>
-                  <label className="label">Oxirgi kunlar</label>
+                  <label className="label">{t("Oxirgi kunlar")}</label>
                   <input type="number" min="1" className="input-field" value={settings.recent_days}
                     onChange={(e) => setSettings({ ...settings, recent_days: e.target.value })} />
                 </div>
               </div>
               <div>
-                <label className="label">Min magnituda (ixtiyoriy)</label>
+                <label className="label">{t("Min magnituda (ixtiyoriy)")}</label>
                 <input type="number" step="0.1" className="input-field"
-                  placeholder="Bo'sh — zilzilalar ko'rsatilmaydi"
+                  placeholder={t("Bo'sh — zilzilalar ko'rsatilmaydi")}
                   value={settings.magnitude}
                   onChange={(e) => setSettings({ ...settings, magnitude: e.target.value })} />
               </div>
               <button className="btn-primary w-full"
                 disabled={wells.length === 0 || params.length === 0 || analysis.isPending}
                 onClick={run}>
-                {analysis.isPending ? "Tahlil qilinmoqda..." : "Tahlilni boshlash"}
+                {analysis.isPending ? t("Tahlil qilinmoqda...") : t("Tahlilni boshlash")}
               </button>
               {analysis.isError && (
                 <p className="text-danger text-sm">
-                  {analysis.error?.response?.data?.error || "Tahlilda xatolik yuz berdi"}
+                  {analysis.error?.response?.data?.error || t("Tahlilda xatolik yuz berdi")}
                 </p>
               )}
             </div>
@@ -251,8 +254,8 @@ function AnalysisTab() {
           <div className="card">
             <p className="text-sm">
               <span className="text-amber font-semibold">{result.anomalous_wells_count}</span>{" "}
-              ta skvajinada anomaliya topildi ·{" "}
-              <span className="text-muted">{result.results.length} ta grafik</span>
+              {t("ta skvajinada anomaliya topildi")} ·{" "}
+              <span className="text-muted">{t("{count} ta grafik", { count: result.results.length })}</span>
             </p>
           </div>
         )}
@@ -266,7 +269,9 @@ function AnalysisTab() {
         {result?.results?.length === 0 && (
           <div className="card">
             <p className="text-sm text-muted">
-              Tanlangan mezonlar bo'yicha so'nggi {result.meta.recent_days} kunda anomaliya topilmadi.
+              {t("Tanlangan mezonlar bo'yicha so'nggi {days} kunda anomaliya topilmadi.", {
+                days: result.meta.recent_days,
+              })}
             </p>
           </div>
         )}
@@ -277,12 +282,12 @@ function AnalysisTab() {
               <p className="text-sm">
                 <span className="font-semibold text-amber">{focusedWell}</span>{" "}
                 {focusedCount > 0
-                  ? `grafiklari birinchi o'ringa chiqarildi (${focusedCount} ta)`
-                  : "uchun grafik yo'q — bu skvajinada anomaliya topilmagan"}
+                  ? t("grafiklari birinchi o'ringa chiqarildi ({count} ta)", { count: focusedCount })
+                  : t("uchun grafik yo'q — bu skvajinada anomaliya topilmagan")}
               </p>
               <button onClick={() => setFocusedWell(null)}
                 className="text-xs font-medium px-2.5 py-1 rounded-md border border-border text-muted hover:text-ink-100 shrink-0">
-                Tartibni tiklash
+                {t("Tartibni tiklash")}
               </button>
             </div>
           )}
@@ -361,6 +366,7 @@ const PULSE_CSS = `
 `;
 
 function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
+  const { t } = useLanguage();
   const wrapRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -409,7 +415,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
       <button onClick={toggleFullscreen}
         className="absolute z-[1000] bg-white border border-border rounded px-2 py-1 text-xs shadow hover:bg-ink-900"
         style={{ top: 80, left: 10 }}
-        title="To'liq ekran">
+        title={t("To'liq ekran")}>
         ⛶
       </button>
 
@@ -427,37 +433,37 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors" />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Terrain">
+          <LayersControl.BaseLayer name={t("Relyef")}>
             <TileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenTopoMap" />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Light Map">
+          <LayersControl.BaseLayer name={t("Yorug'")}>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Satellite">
+          <LayersControl.BaseLayer name={t("Sputnik")}>
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               attribution="Tiles &copy; Esri" />
           </LayersControl.BaseLayer>
 
           {layers?.cracks && (
-            <LayersControl.Overlay checked name="🌍 Yer yoriqlari">
+            <LayersControl.Overlay checked name={`🌍 ${t("Yer yoriqlari")}`}>
               <GeoJSON data={layers.cracks}
                 style={{ color: "#8B0000", weight: 1, opacity: 0.7 }}
                 onEachFeature={(f, l) => {
-                  if (f.properties?.NAME) l.bindTooltip(`Yoriq: ${f.properties.NAME}`);
+                  if (f.properties?.NAME) l.bindTooltip(t("Yoriq: {name}", { name: f.properties.NAME }));
                 }} />
             </LayersControl.Overlay>
           )}
 
           {layers?.zones && (
-            <LayersControl.Overlay checked name="🔴 Seysmogen zonalar">
+            <LayersControl.Overlay checked name={`🔴 ${t("Seysmogen zonalar")}`}>
               <GeoJSON data={layers.zones}
                 style={{ color: "#e75480", weight: 2, fillColor: "#ffb6c1", fillOpacity: 0.35 }}
                 onEachFeature={(f, l) => {
                   const p = f.properties || {};
-                  const name = p.seysmogen_ || p.hududiy_ma || "Seysmogen zona";
+                  const name = p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona");
                   l.bindPopup(`<b>${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
                   if (name) {
                     l.bindTooltip(String(name), {
@@ -469,13 +475,13 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
           )}
 
           {/* Normal birinchi, anomal ustida tursin — eski qatlam tartibi */}
-          <LayersControl.Overlay checked name="✅ Normal skvajinalar">
+          <LayersControl.Overlay checked name={`✅ ${t("Normal skvajinalar")}`}>
             <LayerGroup>
               {normal.map((w) => (
                 <Marker key={w.name} position={[w.lat, w.lon]} icon={normalIcon()}>
                   <LTooltip>
                     <b>{w.name}</b><br />
-                    <span style={{ color: "green" }}>Normal</span>
+                    <span style={{ color: "green" }}>{t("Normal")}</span>
                   </LTooltip>
                   <Popup maxWidth={480}>
                     <WellInfoPopup well={w} />
@@ -485,7 +491,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
             </LayerGroup>
           </LayersControl.Overlay>
 
-          <LayersControl.Overlay checked name="⚠️ Anomal skvajinalar">
+          <LayersControl.Overlay checked name={`⚠️ ${t("Anomal skvajinalar")}`}>
             <LayerGroup>
               {anomalous.map((w) => (
                 <Marker key={w.name} position={[w.lat, w.lon]}
@@ -493,8 +499,8 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
                   eventHandlers={{ click: () => onWellClick?.(w.name) }}>
                   <LTooltip>
                     <b>{w.name}</b><br />
-                    <span style={{ color: "red" }}>⚠️ Anomaliya: {w.params.join(", ")}</span><br />
-                    <span style={{ color: "#6c757d" }}>Grafigini birinchi o'ringa chiqarish uchun bosing</span>
+                    <span style={{ color: "red" }}>⚠️ {t("Anomaliya: {params}", { params: w.params.join(", ") })}</span><br />
+                    <span style={{ color: "#6c757d" }}>{t("Grafigini birinchi o'ringa chiqarish uchun bosing")}</span>
                   </LTooltip>
                   <Popup maxWidth={480}>
                     <WellInfoPopup well={w} onGoToChart={onGoToChart} />
@@ -509,17 +515,17 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
       {/* Shartli belgilar — eski legend_html bilan bir xil */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs"
         style={{ minWidth: 190 }}>
-        <b>Shartli belgilar:</b>
+        <b>{t("Shartli belgilar:")}</b>
         <div className="mt-1 space-y-0.5">
-          <div><Tri c="red" /> Anomal skvajina</div>
-          <div><Tri c="#3388ff" /> Normal skvajina</div>
+          <div><Tri c="red" /> {t("Anomal skvajina")}</div>
+          <div><Tri c="#3388ff" /> {t("Normal skvajina")}</div>
           <div className="flex items-center gap-1.5 py-0.5">
             <div className="w-4 h-[3px] bg-[#8B0000] shrink-0"></div>
-            <span>Yer yorig'i</span>
+            <span>{t("Yer yorig'i")}</span>
           </div>
           <div className="flex items-center gap-1.5 py-0.5">
             <div className="w-4 h-3 bg-[#e75480] border border-[#d23b66] opacity-60 shrink-0"></div>
-            <span>Seysmogen zona</span>
+            <span>{t("Seysmogen zona")}</span>
           </div>
         </div>
       </div>
@@ -536,6 +542,7 @@ function Tri({ c }) {
 /* Popup ochilganda skvajina ma'lumotini yuklaydi (well-info endpoint) —
    eski folium popup'idagi jadvalning aynan o'zi, mineralizatsiya rasmi bilan. */
 function WellInfoPopup({ well, onGoToChart }) {
+  const { t } = useLanguage();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["well-info", well.name],
     queryFn: async () => {
@@ -549,17 +556,17 @@ function WellInfoPopup({ well, onGoToChart }) {
 
   const info = data || {};
   const rows = [
-    ["Nomi", info.nomi || well.name],
-    ["Quduq turi", info.quduq_turi],
-    ["Chuqurlik", info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
-    ["Seysmotektonik holat", info.seysmotektonik_holat],
-    ["Strategrafik taqsimoti", info.strategrafik_taqsimoti],
-    ["Litologik tarkibi", info.litologik_tarkibi],
+    [t("Nomi"), info.nomi || well.name],
+    [t("Quduq turi"), info.quduq_turi],
+    [t("Chuqurlik"), info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
+    [t("Seysmotektonik holat"), info.seysmotektonik_holat],
+    [t("Strategrafik taqsimoti"), info.strategrafik_taqsimoti],
+    [t("Litologik tarkibi"), info.litologik_tarkibi],
   ];
 
   return (
     <div style={{ width: 420, fontFamily: "Arial", fontSize: 12 }}>
-      <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>Skvajina ma'lumotlari</h4>
+      <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>{t("Skvajina ma'lumotlari")}</h4>
 
       {well.anomalous && onGoToChart && (
         <button onClick={() => onGoToChart(well.name)}
@@ -569,12 +576,12 @@ function WellInfoPopup({ well, onGoToChart }) {
             background: "#fd7e14", color: "white",
             fontWeight: "bold", fontSize: 12,
           }}>
-          ↓ Grafigiga o'tish
+          ↓ {t("Grafigiga o'tish")}
         </button>
       )}
 
-      {isLoading && <p>Yuklanmoqda...</p>}
-      {isError && <p style={{ color: "#dc3545" }}>Ma'lumotni yuklab bo'lmadi</p>}
+      {isLoading && <p>{t("Yuklanmoqda...")}</p>}
+      {isError && <p style={{ color: "#dc3545" }}>{t("Ma'lumotni yuklab bo'lmadi")}</p>}
       {!isLoading && !isError && (
         <>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -582,25 +589,25 @@ function WellInfoPopup({ well, onGoToChart }) {
               {rows.map(([label, value], i) => (
                 <tr key={label} style={{ background: i % 2 === 0 ? "#f8f9fa" : "white" }}>
                   <td style={{ padding: 5, border: "1px solid #dee2e6", fontWeight: "bold" }}>{label}:</td>
-                  <td style={{ padding: 5, border: "1px solid #dee2e6" }}>{value || "Ma'lumot yo'q"}</td>
+                  <td style={{ padding: 5, border: "1px solid #dee2e6" }}>{value || t("Ma'lumot yo'q")}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {info.mineralizatsiya_base64 && (
             <div style={{ marginTop: 8, textAlign: "center" }}>
-              <b>Mineralizatsiya:</b><br />
-              <img src={info.mineralizatsiya_base64} alt="Mineralizatsiya"
+              <b>{t("Mineralizatsiya:")}</b><br />
+              <img src={info.mineralizatsiya_base64} alt={t("Mineralizatsiya")}
                 style={{ maxWidth: 400, maxHeight: 300, marginTop: 5, borderRadius: 5 }} />
             </div>
           )}
           {well.anomalous ? (
             <p style={{ marginTop: 8, color: "#dc3545", fontWeight: "bold" }}>
-              ⚠️ Anomaliya: {well.params.join(", ")}
+              ⚠️ {t("Anomaliya: {params}", { params: well.params.join(", ") })}
             </p>
           ) : (
             <p style={{ marginTop: 8, color: "#198754", fontStyle: "italic" }}>
-              Anomaliya topilmadi
+              {t("Anomaliya topilmadi")}
             </p>
           )}
         </>
@@ -617,6 +624,7 @@ function WellInfoPopup({ well, onGoToChart }) {
    o'ng o'qda zilzila ustunlari (masofa bilan), x o'qida ±10 kun.
    ============================================================ */
 function AnomalyChart({ result, sigma, focused = false }) {
+  const { t } = useLanguage();
   const sigmaLabel = Number(sigma ?? 2).toString();
 
   // Zilzila ustunlari (stem): har biri 0 dan Mb gacha, orasida null bilan uziladi
@@ -633,11 +641,11 @@ function AnomalyChart({ result, sigma, focused = false }) {
       x, y, text,
       type: "scatter", mode: "lines",
       line: { color: "darkred", width: 2 },
-      name: "Zilzilalar",
+      name: t("Zilzilalar"),
       hoverinfo: "text",
       yaxis: "y2",
     };
-  }, [result.earthquakes]);
+  }, [result.earthquakes, t]);
 
   const data = useMemo(() => {
     // Chegara chiziqlari eski grafikdagidek faqat MA'LUMOT oralig'ida chiziladi
@@ -650,7 +658,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
         type: "scatter", mode: "lines",
         name: result.param,
         line: { color: "blue", width: 1.5 },
-        hovertemplate: "<b>Sana:</b> %{x|%d.%m.%Y}<br><b>Qiymat:</b> %{y:.3f}<extra></extra>",
+        hovertemplate: `<b>${t("Sana:")}</b> %{x|%d.%m.%Y}<br><b>${t("Qiymat:")}</b> %{y:.3f}<extra></extra>`,
       },
       // 2. Chegaralar: UB yashil, Mean magenta, LB ko'k
       {
@@ -691,12 +699,12 @@ function AnomalyChart({ result, sigma, focused = false }) {
     if (eqTrace) traces.push(eqTrace);
 
     return traces;
-  }, [result, sigmaLabel, eqTrace]);
+  }, [result, sigmaLabel, eqTrace, t]);
 
   const layout = useMemo(() => {
     const l = {
       title: { text: `<b>${result.well} - ${result.param}</b>` },
-      xaxis: { title: { text: "Sana" }, range: result.x_range, gridcolor: "#DEE2E6" },
+      xaxis: { title: { text: t("Sana") }, range: result.x_range, gridcolor: "#DEE2E6" },
       yaxis: { gridcolor: "#DEE2E6" },
       hovermode: "x unified",
       height: 500,
@@ -709,7 +717,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
     };
     if (eqTrace) {
       l.yaxis2 = {
-        title: { text: "Magnituda (Mb)" },
+        title: { text: t("Magnituda (Mb)") },
         overlaying: "y",
         side: "right",
         range: [0, result.eq_axis_max],
@@ -717,21 +725,21 @@ function AnomalyChart({ result, sigma, focused = false }) {
       };
     }
     return l;
-  }, [result, eqTrace]);
+  }, [result, eqTrace, t]);
 
   return (
     <div className={`card ${focused ? "ring-2 ring-amber border-amber/50" : ""}`}>
       <div className="flex items-baseline justify-between mb-1">
         <h3 className="text-base">
-          {focused && <span className="text-amber mr-1.5" title="Xaritada tanlangan">●</span>}
+          {focused && <span className="text-amber mr-1.5" title={t("Xaritada tanlangan")}>●</span>}
           {result.well} — <span className="text-teal font-mono">{result.param}</span>
         </h3>
-        <p className="text-xs text-amber font-mono">{result.anomalies.length} ta anomaliya</p>
+        <p className="text-xs text-amber font-mono">{t("{count} ta anomaliya", { count: result.anomalies.length })}</p>
       </div>
       <p className="text-xs text-muted font-mono mb-2">
         {result.anomalies.map((a, i) => (
           <span key={i} className="mr-3">
-            {a.start_date} — {a.end_date} ({a.count} ta)
+            {a.start_date} — {a.end_date} {t("({count} ta)", { count: a.count })}
           </span>
         ))}
       </p>
@@ -748,6 +756,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
 
 /* ================= TARIX ================= */
 function HistoryTab() {
+  const { t } = useLanguage();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["anomaly-history"],
     queryFn: fetchHistory,
@@ -755,21 +764,21 @@ function HistoryTab() {
 
   return (
     <div className="card overflow-hidden p-0">
-      {isLoading && <p className="text-sm text-muted p-4">Yuklanmoqda...</p>}
-      {isError && <p className="text-sm text-danger p-4">Tarixni yuklab bo'lmadi.</p>}
+      {isLoading && <p className="text-sm text-muted p-4">{t("Yuklanmoqda...")}</p>}
+      {isError && <p className="text-sm text-danger p-4">{t("Tarixni yuklab bo'lmadi.")}</p>}
       {data?.records?.length === 0 && (
-        <p className="text-sm text-muted p-4">Hozircha yozuvlar yo'q.</p>
+        <p className="text-sm text-muted p-4">{t("Hozircha yozuvlar yo'q.")}</p>
       )}
       {data?.records?.length > 0 && (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted">
-              <th className="px-4 py-3 font-medium">Sana</th>
-              <th className="px-4 py-3 font-medium">Skvajina</th>
-              <th className="px-4 py-3 font-medium">Parametr</th>
-              <th className="px-4 py-3 font-medium">Davr</th>
-              <th className="px-4 py-3 font-medium">Aniqlangan</th>
-              <th className="px-4 py-3 font-medium">Oraliq</th>
+              <th className="px-4 py-3 font-medium">{t("Sana")}</th>
+              <th className="px-4 py-3 font-medium">{t("Skvajina")}</th>
+              <th className="px-4 py-3 font-medium">{t("Parametr")}</th>
+              <th className="px-4 py-3 font-medium">{t("Davr")}</th>
+              <th className="px-4 py-3 font-medium">{t("Aniqlangan")}</th>
+              <th className="px-4 py-3 font-medium">{t("Oraliq")}</th>
             </tr>
           </thead>
           <tbody>

@@ -10,6 +10,7 @@ import Plotly from "plotly.js-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -57,6 +58,7 @@ function eqStyle(mb, filterMode) {
 }
 
 export default function Seismos() {
+  const { t } = useLanguage();
   const options = useQuery({ queryKey: ["seismos-options"], queryFn: fetchOptions });
   const layers = useQuery({
     queryKey: ["seismos-layers"],
@@ -101,17 +103,17 @@ export default function Seismos() {
 
   return (
     <div>
-      {options.isLoading && <p className="text-sm text-muted">Yuklanmoqda...</p>}
+      {options.isLoading && <p className="text-sm text-muted">{t("Yuklanmoqda...")}</p>}
       {options.isError && (
         <p className="text-sm text-danger">
-          Boshlang'ich ma'lumotlarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.
+          {t("Boshlang'ich ma'lumotlarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.")}
         </p>
       )}
 
       {options.data && (
         <>
         <h1 className="text-2xl md:text-3xl text-center tracking-wide mb-6 mt-4">
-          SEYSMOPROGNOSTIK TAHLIL
+          {t("SEYSMOPROGNOSTIK TAHLIL")}
         </h1>
 
         {/* 2-rasmdagi forma: chap ko'k hoshiyali karta */}
@@ -119,7 +121,7 @@ export default function Seismos() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <details className="border border-border rounded-md">
               <summary className="px-3 py-2.5 cursor-pointer font-semibold text-sm">
-                Skvajinalar{" "}
+                {t("Skvajinalar")}{" "}
                 <span className="bg-teal text-white text-xs rounded px-1.5 py-0.5">{selectedKeys.length}</span>
               </summary>
               <div className="px-3 pb-3 max-h-56 overflow-y-auto">
@@ -127,7 +129,7 @@ export default function Seismos() {
                   <input type="checkbox" className="accent-teal shrink-0"
                     checked={options.data.wells.length > 0 && selectedKeys.length === options.data.wells.length}
                     onChange={(e) => setSelectedKeys(e.target.checked ? [...options.data.wells] : [])} />
-                  Hammasini tanlash
+                  {t("Hammasini tanlash")}
                 </label>
                 {options.data.wells.map((key) => (
                   <label key={key} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
@@ -142,7 +144,7 @@ export default function Seismos() {
 
             <details className="border border-border rounded-md">
               <summary className="px-3 py-2.5 cursor-pointer font-semibold text-sm">
-                Parametrlar{" "}
+                {t("Parametrlar")}{" "}
                 <span className="bg-teal text-white text-xs rounded px-1.5 py-0.5">{selectedParams.length}</span>
               </summary>
               <div className="px-3 pb-3 max-h-56 overflow-y-auto">
@@ -156,7 +158,7 @@ export default function Seismos() {
                       const all = [...new Set(Object.values(options.data.param_groups).flat())];
                       setSelectedParams(e.target.checked ? all : []);
                     }} />
-                  Hammasini tanlash
+                  {t("Hammasini tanlash")}
                 </label>
                 {Object.entries(options.data.param_groups).map(([group, params]) => (
                   <div key={group} className="mt-1">
@@ -175,21 +177,21 @@ export default function Seismos() {
             </details>
 
             <div>
-              <label className="label">Min Magnituda</label>
-              <input type="number" step="0.1" placeholder="Magnituda" className="input-field"
+              <label className="label">{t("Min Magnituda")}</label>
+              <input type="number" step="0.1" placeholder={t("Magnituda")} className="input-field"
                 value={settings.min_mag}
                 onChange={(e) => setSettings({ ...settings, min_mag: e.target.value })} />
             </div>
             <div>
-              <label className="label">Sigma (σ)</label>
-              <input type="number" step="0.1" placeholder="Sigma" className="input-field"
+              <label className="label">{t("Sigma (σ)")}</label>
+              <input type="number" step="0.1" placeholder={t("Sigma")} className="input-field"
                 value={settings.sigma}
                 onChange={(e) => setSettings({ ...settings, sigma: e.target.value })} />
             </div>
 
             <div>
-              <label className="label">Yillik Sigma davri (ixtiyoriy):</label>
-              <input type="number" min="1" placeholder="Yillar soni (masalan: 2)" className="input-field"
+              <label className="label">{t("Yillik Sigma davri (ixtiyoriy):")}</label>
+              <input type="number" min="1" placeholder={t("Yillar soni (masalan: 2)")} className="input-field"
                 value={settings.segment_years}
                 onChange={(e) => setSettings({ ...settings, segment_years: e.target.value })} />
             </div>
@@ -200,13 +202,13 @@ export default function Seismos() {
                   <input type="radio" name="filter_mode" className="accent-teal"
                     checked={settings.filter_mode === "mlgr"}
                     onChange={() => setSettings({ ...settings, filter_mode: "mlgr" })} />
-                  <span className="text-teal">M/lgR bo'yicha</span>
+                  <span className="text-teal">{t("M/lgR bo'yicha")}</span>
                 </label>
                 <label className="flex items-center gap-1.5 text-sm cursor-pointer whitespace-nowrap">
                   <input type="radio" name="filter_mode" className="accent-teal"
                     checked={settings.filter_mode === "mb"}
                     onChange={() => setSettings({ ...settings, filter_mode: "mb" })} />
-                  <span className="text-teal">Mb bo'yicha</span>
+                  <span className="text-teal">{t("Mb bo'yicha")}</span>
                 </label>
                 <input type="number" step="0.1" placeholder="M/lgR"
                   className="input-field !w-24 ml-auto"
@@ -217,38 +219,38 @@ export default function Seismos() {
             </div>
 
             <div>
-              <label className="label">Boshlanish</label>
+              <label className="label">{t("Boshlanish")}</label>
               <input type="date" className="input-field" value={settings.start_date}
                 onChange={(e) => setSettings({ ...settings, start_date: e.target.value })} />
             </div>
             <div>
-              <label className="label">Tugash</label>
+              <label className="label">{t("Tugash")}</label>
               <input type="date" className="input-field" value={settings.end_date}
                 onChange={(e) => setSettings({ ...settings, end_date: e.target.value })} />
             </div>
 
             <div>
-              <label className="label">Mediana</label>
+              <label className="label">{t("Mediana")}</label>
               <select className="input-field" value={settings.median_window}
                 onChange={(e) => setSettings({ ...settings, median_window: e.target.value })}>
-                <option value="">Tanlanmagan</option>
+                <option value="">{t("Tanlanmagan")}</option>
                 {options.data.median_values.map((v) => (
                   <option key={v} value={v}>{v}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="label">Ko'rsatish nazorati</label>
+              <label className="label">{t("Ko'rsatish nazorati")}</label>
               <div className="flex gap-2 flex-wrap">
                 <label className="flex items-center gap-2 text-sm border border-border rounded-full px-3.5 py-2 cursor-pointer">
                   <input type="checkbox" className="accent-teal" checked={showMap}
                     onChange={(e) => setShowMap(e.target.checked)} />
-                  Xarita ko'rsatilsin
+                  {t("Xarita ko'rsatilsin")}
                 </label>
                 <label className="flex items-center gap-2 text-sm border border-border rounded-full px-3.5 py-2 cursor-pointer">
                   <input type="checkbox" className="accent-teal" checked={showGraphs}
                     onChange={(e) => setShowGraphs(e.target.checked)} />
-                  Grafiklar ko'rsatilsin
+                  {t("Grafiklar ko'rsatilsin")}
                 </label>
               </div>
             </div>
@@ -257,11 +259,11 @@ export default function Seismos() {
           <button className="btn-primary w-full mt-4 py-2.5"
             disabled={selectedKeys.length === 0 || analysis.isPending}
             onClick={runAnalysis}>
-            {analysis.isPending ? "Tahlil qilinmoqda..." : "Tahlil qilish"}
+            {analysis.isPending ? t("Tahlil qilinmoqda...") : t("Tahlil qilish")}
           </button>
           {analysis.isError && (
             <p className="text-danger text-sm mt-2">
-              {analysis.error?.response?.data?.error || "Tahlilda xatolik yuz berdi"}
+              {analysis.error?.response?.data?.error || t("Tahlilda xatolik yuz berdi")}
             </p>
           )}
         </div>
@@ -269,45 +271,47 @@ export default function Seismos() {
         {/* Mavjud ma'lumotlar oralig'i banneri (eski sahifadagidek) */}
         <div className="max-w-4xl mx-auto mb-6 rounded-md px-4 py-3 text-sm"
           style={{ background: "#cff4fc", color: "#055160" }}>
-          Mavjud ma'lumotlar oralig'i:{" "}
+          {t("Mavjud ma'lumotlar oralig'i:")}{" "}
           {options.data.data_min_date ? (
             <>
-              <b>{options.data.data_min_date}</b> dan <b>{options.data.data_max_date}</b> gacha
+              <b>{options.data.data_min_date}</b> {t("dan")} <b>{options.data.data_max_date}</b> {t("gacha")}
             </>
           ) : (
-            "Ma'lumot topilmadi."
+            t("Ma'lumot topilmadi.")
           )}
         </div>
 
         <div className="space-y-6">
           {showMap && (
             <>
-              <h2 className="text-xl mt-2">Barcha skvajinalar xaritasi</h2>
+              <h2 className="text-xl mt-2">{t("Barcha skvajinalar xaritasi")}</h2>
               {layers.isLoading && (
                 <p className="text-sm text-muted">
-                  Xarita qatlamlari (yoriqlar, seysmogen zonalar) yuklanmoqda...
+                  {t("Xarita qatlamlari (yoriqlar, seysmogen zonalar) yuklanmoqda...")}
                 </p>
               )}
               {layers.isError && (
                 <div className="rounded-md px-4 py-3 text-sm"
                   style={{ background: "#f8d7da", color: "#842029" }}>
-                  Yoriqlar va seysmogen zonalarni yuklab bo'lmadi
+                  {t("Yoriqlar va seysmogen zonalarni yuklab bo'lmadi")}
                   {layers.error?.response?.status
-                    ? ` (server xatosi: ${layers.error.response.status})`
-                    : " (serverga ulanib bo'lmadi)"}
-                  . Django terminalidagi xatoni tekshiring — ko'pincha sababi
-                  Redis ishlamayotgani yoki shapefile'lar yo'qligi bo'ladi.
+                    ? ` (${t("server xatosi:")} ${layers.error.response.status})`
+                    : ` (${t("serverga ulanib bo'lmadi")})`}
+                  . {t("Django terminalidagi xatoni tekshiring — ko'pincha sababi Redis ishlamayotgani yoki shapefile'lar yo'qligi bo'ladi.")}
                 </div>
               )}
+              {/* minMlgr uzatilmaydi — halqalar qattiq 2.5 bo'yicha chiziladi.
+                  Oldingi ko'rinish:
+                  minMlgr={Number(settings.min_mlgr) || 2.5} */}
               <ResultsMap options={options.data} result={result} layers={layers.data}
-                filterMode={settings.filter_mode} minMlgr={Number(settings.min_mlgr) || 2.5} />
+                filterMode={settings.filter_mode} />
             </>
           )}
 
           {result?.series?.length === 0 && (
             <div className="card">
               <p className="text-sm text-muted">
-                Tanlangan quduq va parametrlar uchun ma'lumot topilmadi.
+                {t("Tanlangan quduq va parametrlar uchun ma'lumot topilmadi.")}
               </p>
             </div>
           )}
@@ -355,7 +359,11 @@ function triangleIcon(color, size = 10) {
   });
 }
 
-const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMode, minMlgr }) {
+// `minMlgr` prop endi kerak emas — halqalar qattiq belgilangan 2.5 bo'yicha
+// chiziladi (pastdagi MLGR_VAL izohiga qarang). Oldingi ko'rinish:
+//   function ResultsMap({ options, result, layers, filterMode, minMlgr }) {
+const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMode }) {
+  const { t } = useLanguage();
   const wrapRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -425,9 +433,19 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
   }
 
   const RING_MS = [5, 6, 7];
-  // Halqa radiusi foydalanuvchi kiritgan Min M/lgR bo'yicha (asl views.py:
-  // R_km = 10 ** (M / mlgr_val)). 0 yoki bo'sh bo'lsa 2.5 ga tushadi.
-  const MLGR_VAL = minMlgr && minMlgr > 0 ? minMlgr : 2.5;
+  // Halqa radiusi: R_km = 10 ** (M / MLGR_VAL).
+  //
+  // MLGR_VAL — QATTIQ BELGILANGAN 2.5. Chap paneldagi "Min M/lgR" maydoniga
+  // BOG'LIQ EMAS: u faqat zilzilalarni filtrlash uchun ishlatiladi, halqalar
+  // esa har doim bir xil masshtabda chizilishi kerak:
+  //   M=5 -> 100 km,  M=6 -> 251.2 km,  M=7 -> 631 km
+  //
+  // v1 da ham shunday (PROJECT/Seismo/seismos_app/views.py, 1933 / 2114 /
+  // 2387-qatorlar): `mlgr_val = 2.5  # Fix qiymat`.
+  //
+  // Oldingi (xato) ko'rinish — foydalanuvchi kiritmasiga bog'langan edi:
+  //   const MLGR_VAL = minMlgr && minMlgr > 0 ? minMlgr : 2.5;
+  const MLGR_VAL = 2.5;
 
   function ringsFor(w, color) {
     if (!ringsOn(w)) return null;
@@ -437,7 +455,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
         <Circle key={`${w.name}-M${M}`} center={[w.lat, w.lon]}
           radius={rKm * 1000}
           pathOptions={{ color: hexToRgba(color, 0.9), weight: 2, fill: false, opacity: 0.7 }}>
-          <LTooltip>{`M=${M}, R=${rKm.toFixed(1)} km (M/lgR=${MLGR_VAL})`}</LTooltip>
+          <LTooltip>{t("M={m}, R={r} km (M/lgR={mlgr})", { m: M, r: rKm.toFixed(1), mlgr: MLGR_VAL })}</LTooltip>
         </Circle>
       );
     });
@@ -454,7 +472,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
       <button onClick={toggleFullscreen}
         className="absolute z-[1000] bg-white border border-border rounded px-2 py-1 text-xs shadow hover:bg-ink-900"
         style={{ top: 80, left: 10 }}
-        title="To'liq ekran">
+        title={t("To'liq ekran")}>
         ⛶
       </button>
 
@@ -470,42 +488,52 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
         preferCanvas={true}>
         <FullscreenInvalidate trigger={isFullscreen} />
         <LayersControl position="topright">
-          {/* Fon xaritalari — eski faylga mos 4 xil */}
-          <LayersControl.BaseLayer checked name="OpenStreetMap">
+          {/* Fon xaritalari — eski faylga mos 4 xil.
+              QO'SHILDI: "Без подписей" — yozuvsiz fon. Oddiy OpenStreetMap
+              joy nomlarini MAHALLIY tilda chizadi, shuning uchun Xitoy
+              hududida iyeroglif yozuvlar chiqadi. Dissertatsiya rasmi uchun
+              yozuvsiz fon toza chiqadi va o'z belgilaringizga xalaqit
+              bermaydi. Shuning uchun u birinchi va standart qilib qo'yildi.
+              Eski standart OpenStreetMap edi (checked o'sha yerda turgan). */}
+          <LayersControl.BaseLayer checked name={t("Yozuvsiz fon")}>
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="OpenStreetMap">
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors" />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Terrain">
+          <LayersControl.BaseLayer name={t("Relyef")}>
             <TileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenTopoMap" />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Light Map">
+          <LayersControl.BaseLayer name={t("Yorug'")}>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Satellite">
+          <LayersControl.BaseLayer name={t("Sputnik")}>
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               attribution="Tiles &copy; Esri" />
           </LayersControl.BaseLayer>
 
           {layers?.cracks && (
-            <LayersControl.Overlay checked name="Yer yoriqlari">
+            <LayersControl.Overlay checked name={t("Yoriqlar")}>
               <GeoJSON data={layers.cracks}
                 style={{ color: "#8B0000", weight: 1, opacity: 0.7 }}
                 onEachFeature={(f, l) => {
-                  if (f.properties?.NAME) l.bindTooltip(`Yoriq: ${f.properties.NAME}`);
+                  if (f.properties?.NAME) l.bindTooltip(t("Yoriq: {name}", { name: f.properties.NAME }));
                 }} />
             </LayersControl.Overlay>
           )}
 
           {layers?.zones && (
-            <LayersControl.Overlay checked name="Seysmogen zonalar">
+            <LayersControl.Overlay checked name={t("Seysmogen zonalar")}>
               <GeoJSON data={layers.zones}
                 style={{ color: "#e75480", weight: 2, fillColor: "#ffb6c1", fillOpacity: 0.35 }}
                 onEachFeature={(f, l) => {
                   const p = f.properties || {};
-                  const name = p.seysmogen_ || p.hududiy_ma || "Seysmogen zona";
+                  const name = p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona");
                   l.bindPopup(`<b>${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
                   if (name) {
                     l.bindTooltip(String(name), {
@@ -530,11 +558,11 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                 pathOptions={{ color: "#111", fillColor: st.color, fillOpacity: 0.85, weight: 1.5 }}>
                 <LTooltip>
                   <div>
-                    <b>Zilzila</b><br />
-                    Sana: {eq.datetime?.replace("T", " ")}<br />
-                    Magnituda (Mb): {eq.mb}<br />
-                    Chuqurlik (km): {eq.depth ?? "—"}<br />
-                    {eq.r_km != null && <>Masofa (km): {eq.r_km}<br /></>}
+                    <b>{t("Zilzila")}</b><br />
+                    {t("Sana:")} {eq.datetime?.replace("T", " ")}<br />
+                    {t("Magnituda (Mb):")} {eq.mb}<br />
+                    {t("Chuqurlik (km):")} {eq.depth ?? "—"}<br />
+                    {eq.r_km != null && <>{t("Masofa (km):")} {eq.r_km}<br /></>}
                     {eq.mlgr != null && <>M/lgR: {eq.mlgr}</>}
                   </div>
                 </LTooltip>
@@ -573,38 +601,45 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
       {/* Legenda — xarita ichida suzuvchi quti */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs max-h-48 overflow-y-auto"
         style={{ minWidth: 190 }}>
-        <b>Xarita elementlari:</b>
+        {/* Ilgari alohida rus tiliga qattiq tarjima qilingan edi (Условные
+            обозначения:), endi umumiy t() mexanizmiga o'tkazildi — shu bilan
+            ikkala tilda ham ishlaydi. Asl o'zbekcha: "Xarita elementlari:",
+            keyin "Shartli belgilar:" ga almashtirilgan edi. */}
+        <b>{t("Shartli belgilar:")}</b>
         <div className="mt-1 space-y-0.5">
           {filterMode === "mb" ? (
             <>
-              <div><Dot c="red" /> Zilzila Mb &gt; 2.8</div>
-              <div><Dot c="orange" /> Zilzila Mb 2.0–2.8</div>
-              <div><Dot c="gold" /> Zilzila Mb &lt; 2.0</div>
+              <div><Dot c="red" /> {t("Zilzila Mb > 2.8")}</div>
+              <div><Dot c="orange" /> {t("Zilzila Mb 2.0–2.8")}</div>
+              <div><Dot c="gold" /> {t("Zilzila Mb < 2.0")}</div>
             </>
           ) : (
             <>
-              <div><Dot c="darkred" /> Zilzila Mb ≥ 6.0</div>
-              <div><Dot c="red" /> Zilzila Mb 5.0–5.9</div>
-              <div><Dot c="orange" /> Zilzila Mb 4.0–4.9</div>
-              <div><Dot c="gold" /> Zilzila Mb &lt; 4.0</div>
+              <div><Dot c="darkred" /> {t("Zilzila Mb ≥ 6.0")}</div>
+              <div><Dot c="red" /> {t("Zilzila Mb 5.0–5.9")}</div>
+              <div><Dot c="orange" /> {t("Zilzila Mb 4.0–4.9")}</div>
+              <div><Dot c="gold" /> {t("Zilzila Mb < 4.0")}</div>
             </>
           )}
+          {/* Eski ko'rinish uchta uchburchak bilan edi:
+              <Tri c="#0000FF" /><Tri c="#FF00FF" /><Tri c="#FFA500" />
+              Dissertatsiya uchun faqat bittasi qoldirildi. */}
           <div>
-            <Tri c="#0000FF" /><Tri c="#FF00FF" /><Tri c="#FFA500" />{" "}
-            Tanlangan skvajinalar (har biri o'z rangida)
+            <Tri c="#0000FF" />{" "}
+            {t("Tanlangan skvajinalar")}
           </div>
-          <div><Tri c="#ADD8E6" /> Tanlanmagan skvajinalar</div>
+          <div><Tri c="#ADD8E6" /> {t("Tanlanmagan skvajinalar")}</div>
           <div className="flex items-center gap-1.5 py-0.5">
             <div className="w-4 h-[3px] bg-[#8B0000] shrink-0"></div>
-            <span>Yer yoriqlari</span>
+            <span>{t("Yer yoriqlari")}</span>
           </div>
           <div className="flex items-center gap-1.5 py-0.5">
             <div className="w-4 h-3 bg-[#e75480] border border-[#d23b66] opacity-60 shrink-0"></div>
-            <span>Seysmogen zonalar</span>
+            <span>{t("Seysmogen zonalar")}</span>
           </div>
           <div className="flex items-center gap-1.5 py-0.5">
             <div className="w-3 h-3 rounded-full border border-[#0B43FA] bg-transparent shrink-0"></div>
-            <span>M=5/6/7 halqalari Sezgirlik zonasi</span>
+            <span>{t("M=5/6/7 halqalari — sezgirlik zonasi")}</span>
           </div>
         </div>
       </div>
@@ -626,6 +661,7 @@ function Dot({ c }) {
    Eski folium popup'idagi jadval bilan bir xil — tanlangan/tanlanmagan
    farqi faqat pastki yozuvda. */
 function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
+  const { t } = useLanguage();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["well-info", well.name],
     queryFn: async () => {
@@ -639,17 +675,17 @@ function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
 
   const info = data || {};
   const rows = [
-    ["Nomi", info.nomi || well.name],
-    ["Quduq turi", info.quduq_turi],
-    ["Chuqurlik", info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
-    ["Seysmotektonik holat", info.seysmotektonik_holat],
-    ["Strategrafik taqsimoti", info.strategrafik_taqsimoti],
-    ["Litologik tarkibi", info.litologik_tarkibi],
+    [t("Nomi"), info.nomi || well.name],
+    [t("Quduq turi"), info.quduq_turi],
+    [t("Chuqurlik"), info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
+    [t("Seysmotektonik holat"), info.seysmotektonik_holat],
+    [t("Strategrafik taqsimoti"), info.strategrafik_taqsimoti],
+    [t("Litologik tarkibi"), info.litologik_tarkibi],
   ];
 
   return (
     <div style={{ width: 420, fontFamily: "Arial", fontSize: 12 }}>
-      <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>Skvajina ma'lumotlari</h4>
+      <h4 style={{ color: "#2c3e50", marginBottom: 8 }}>{t("Skvajina ma'lumotlari")}</h4>
 
       {/* M=5/6/7 halqalarini yoqish/o'chirish (avval marker bosilganda edi,
           lekin u Popup bilan konflikt qilardi — endi alohida tugma) */}
@@ -662,12 +698,12 @@ function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
             color: ringsOn ? "white" : (color || "#0B43FA"),
             fontWeight: "bold", fontSize: 12,
           }}>
-          {ringsOn ? "◉ Halqalarni o'chirish" : "◯ M=5/6/7 halqalarini ko'rsatish"}
+          {ringsOn ? t("◉ Halqalarni o'chirish") : t("◯ M=5/6/7 halqalarini ko'rsatish")}
         </button>
       )}
 
-      {isLoading && <p>Yuklanmoqda...</p>}
-      {isError && <p style={{ color: "#dc3545" }}>Ma'lumotni yuklab bo'lmadi</p>}
+      {isLoading && <p>{t("Yuklanmoqda...")}</p>}
+      {isError && <p style={{ color: "#dc3545" }}>{t("Ma'lumotni yuklab bo'lmadi")}</p>}
       {!isLoading && !isError && (
         <>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -675,25 +711,25 @@ function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
               {rows.map(([label, value], i) => (
                 <tr key={label} style={{ background: i % 2 === 0 ? "#f8f9fa" : "white" }}>
                   <td style={{ padding: 5, border: "1px solid #dee2e6", fontWeight: "bold" }}>{label}:</td>
-                  <td style={{ padding: 5, border: "1px solid #dee2e6" }}>{value || "Ma'lumot yo'q"}</td>
+                  <td style={{ padding: 5, border: "1px solid #dee2e6" }}>{value || t("Ma'lumot yo'q")}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {info.mineralizatsiya_base64 && (
             <div style={{ marginTop: 8, textAlign: "center" }}>
-              <b>Mineralizatsiya:</b><br />
-              <img src={info.mineralizatsiya_base64} alt="Mineralizatsiya"
+              <b>{t("Mineralizatsiya:")}</b><br />
+              <img src={info.mineralizatsiya_base64} alt={t("Mineralizatsiya")}
                 style={{ maxWidth: 400, maxHeight: 300, marginTop: 5, borderRadius: 5 }} />
             </div>
           )}
           {well.selected ? (
             <p style={{ marginTop: 8, color: color || "#0B43FA", fontWeight: "bold" }}>
-              ✓ Tanlangan skvajina
+              ✓ {t("Tanlangan skvajina")}
             </p>
           ) : (
             <p style={{ marginTop: 8, color: "#6c757d", fontStyle: "italic" }}>
-              Tanlanmagan skvajina
+              {t("Tanlanmagan skvajina")}
             </p>
           )}
         </>
@@ -708,6 +744,7 @@ function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
    ustunlar sifatida; PNG yuklash tugmasi; yillik sigma segmentlari.
    ============================================================ */
 function SeriesChart({ series }) {
+  const { t } = useLanguage();
   const chartId = `chart-${series.key}-${series.param}`.replace(/[^a-zA-Z0-9-]/g, "_");
 
   const data = useMemo(() => {
@@ -716,7 +753,7 @@ function SeriesChart({ series }) {
         x: series.dates, y: series.values,
         type: "scatter", mode: "lines", name: series.param,
         line: { color: "#0d6efd", width: 1.4 },
-        hovertemplate: "%{x}<br>Qiymat: %{y}<extra></extra>",
+        hovertemplate: `%{x}<br>${t("Qiymat")}: %{y}<extra></extra>`,
       },
     ];
 
@@ -725,7 +762,7 @@ function SeriesChart({ series }) {
     const lower = series.lower ?? series.mean - series.sigma;
     traces.push(
       { x: xr, y: [series.mean, series.mean], type: "scatter", mode: "lines",
-        name: "O'rtacha", line: { color: "#6c757d", dash: "dash", width: 1 }, hoverinfo: "skip" },
+        name: t("O'rtacha"), line: { color: "#6c757d", dash: "dash", width: 1 }, hoverinfo: "skip" },
       { x: xr, y: [upper, upper], type: "scatter", mode: "lines",
         name: "+σ", line: { color: "#fd7e14", dash: "dot", width: 1 }, hoverinfo: "skip" },
       { x: xr, y: [lower, lower], type: "scatter", mode: "lines",
@@ -740,9 +777,9 @@ function SeriesChart({ series }) {
         lbx.push(seg.start, seg.end, null); lby.push(seg.lb, seg.lb, null);
       }
       traces.push(
-        { x: ubx, y: uby, type: "scatter", mode: "lines", name: "Yillik UB",
+        { x: ubx, y: uby, type: "scatter", mode: "lines", name: t("Yillik UB"),
           line: { color: "#198754", width: 1.5 }, hoverinfo: "skip", connectgaps: false },
-        { x: lbx, y: lby, type: "scatter", mode: "lines", name: "Yillik LB",
+        { x: lbx, y: lby, type: "scatter", mode: "lines", name: t("Yillik LB"),
           line: { color: "#198754", width: 1.5, dash: "dash" }, hoverinfo: "skip", connectgaps: false },
       );
     }
@@ -752,19 +789,19 @@ function SeriesChart({ series }) {
       traces.push({
         x: series.earthquakes.map((eq) => eq.datetime.slice(0, 10)),
         y: series.earthquakes.map((eq) => eq.mb),
-        type: "bar", name: "Zilzila (Mb)", yaxis: "y2",
+        type: "bar", name: t("Zilzila (Mb)"), yaxis: "y2",
         width: 1000 * 60 * 60 * 24 * 0.5,// ~3 kunlik ingichka ustun
         marker: {
           color: series.earthquakes.map((eq) => (eq.mb >= 6 ? "#dc3545" : "#4B0082")),
         },
         customdata: series.earthquakes.map((eq) => [eq.r_km, eq.mlgr]),
         hovertemplate:
-          "Sana: %{x}<br>Mb: %{y}<br>Masofa: %{customdata[0]} km<extra></extra>",
+          `${t("Sana:")} %{x}<br>Mb: %{y}<br>${t("Masofa:")} %{customdata[0]} km<extra></extra>`,
       });
     }
 
     return traces;
-  }, [series]);
+  }, [series, t]);
 
   // Zilzila ustuniga bosilganda ochiladigan, qayta bosilsa yopiladigan
   // (toggle) belgi. Bir nechtasi bir vaqtda ochiq turishi mumkin.
@@ -772,7 +809,7 @@ function SeriesChart({ series }) {
 
   function handlePlotClick(event) {
     const pt = event?.points?.[0];
-    if (!pt || pt.data?.name !== "Zilzila (Mb)") return;
+    if (!pt || pt.data?.name !== t("Zilzila (Mb)")) return;
     const idx = pt.pointIndex;
     setOpenedEq((prev) => {
       const next = new Set(prev);
@@ -790,14 +827,14 @@ function SeriesChart({ series }) {
       return {
         x: eq.datetime.slice(0, 10), y: eq.mb, yref: "y2",
         text:
-          `Mb: ${eq.mb}${eq.depth != null ? `, Chuqurlik: ${eq.depth} km` : ""}<br>` +
-          `${eq.r_km != null ? `Masofa: ${eq.r_km} km` : ""}`,
+          `Mb: ${eq.mb}${eq.depth != null ? `, ${t("Chuqurlik:")} ${eq.depth} km` : ""}<br>` +
+          `${eq.r_km != null ? `${t("Masofa:")} ${eq.r_km} km` : ""}`,
         showarrow: true, arrowhead: 2, ax: 0, ay: -40,
         bgcolor: "white", bordercolor: "#4B0082", borderwidth: 1, borderpad: 4,
         font: { size: 14, color: "#212529" },
       };
     }).filter(Boolean);
-  }, [openedEq, series.earthquakes]);
+  }, [openedEq, series.earthquakes, t]);
 
   function downloadPng() {
     const el = document.getElementById(chartId)?.querySelector(".js-plotly-plot");
@@ -818,7 +855,7 @@ function SeriesChart({ series }) {
         </h3>
         <button onClick={downloadPng}
           className="px-3 py-1.5 text-sm rounded-md border border-teal text-teal hover:bg-blue-50 transition-colors">
-          Grafikni yuklash (PNG)
+          {t("Grafikni yuklash (PNG)")}
         </button>
       </div>
       <div className="p-2" id={chartId}>
@@ -830,9 +867,9 @@ function SeriesChart({ series }) {
             height: 420,
             margin: { l: 60, r: 60, t: 45, b: 40 },
             xaxis: { gridcolor: "#DEE2E6" },
-            yaxis: { title: { text: `${series.param} Qiymati` }, gridcolor: "#DEE2E6" },
+            yaxis: { title: { text: t("{param} Qiymati", { param: series.param }) }, gridcolor: "#DEE2E6" },
             yaxis2: {
-              title: { text: "Magnituda (Mb)" },
+              title: { text: t("Magnituda (Mb)") },
               overlaying: "y", side: "right",
               range: [0, Math.max(7, ...(series.earthquakes?.map((e) => e.mb) || [7])) + 0.5],
               showgrid: false,

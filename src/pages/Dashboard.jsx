@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const MODULES = [
   { to: "/seismos", title: "Seysmik tahlil", desc: "Quduq tanlash, xarita va sigma-tahlil grafiklari" },
@@ -11,10 +12,11 @@ const MODULES = [
 
 /* Eski index.html'ning aynan nusxasi: katta sarlavha + laboratoriya posteri */
 export default function Dashboard() {
+  const { t } = useLanguage();
   return (
     <div>
       <h1 className="text-3xl md:text-4xl text-center mt-6 mb-10">
-        Seysmoprognostik ma'lumotlarni tahlil qilish boshqaruv paneli
+        {t("Seysmoprognostik ma'lumotlarni tahlil qilish boshqaruv paneli")}
       </h1>
 
       <div className="flex justify-center mb-10">
@@ -26,8 +28,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
         {MODULES.map((m) => (
           <Link key={m.to} to={m.to} className="card hover:border-teal transition-colors">
-            <h3 className="text-base mb-1.5">{m.title}</h3>
-            <p className="text-sm text-muted">{m.desc}</p>
+            <h3 className="text-base mb-1.5">{t(m.title)}</h3>
+            <p className="text-sm text-muted">{t(m.desc)}</p>
           </Link>
         ))}
       </div>
