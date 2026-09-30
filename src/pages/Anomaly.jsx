@@ -393,7 +393,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
         return {
           number: p.zone_number ?? 0,
           roman: p.roman || "",
-          name: p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona"),
+          name: t(p.seysmogen_ || p.hududiy_ma || "Seysmogen zona"),
         };
       })
       .filter((z) => z.roman)
@@ -488,7 +488,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
                 style={{ color: "#e75480", weight: 2, fillColor: "#ffb6c1", fillOpacity: 0.35 }}
                 onEachFeature={(f, l) => {
                   const p = f.properties || {};
-                  const name = p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona");
+                  const name = t(p.seysmogen_ || p.hududiy_ma || "Seysmogen zona");
                   // Xaritada endi to'liq nom o'rniga FAQAT rim raqami
                   // ko'rsatiladi (Seismos.jsx bilan bir xil, v1 folium
                   // xaritasidagi kabi) — to'liq nomlar o'ng tarafdagi

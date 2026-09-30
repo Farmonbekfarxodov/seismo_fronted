@@ -421,7 +421,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
         return {
           number: p.zone_number ?? 0,
           roman: p.roman || "",
-          name: p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona"),
+          name: t(p.seysmogen_ || p.hududiy_ma || "Seysmogen zona"),
         };
       })
       .filter((z) => z.roman)
@@ -587,7 +587,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                 style={{ color: "#e75480", weight: 2, fillColor: "#ffb6c1", fillOpacity: 0.35 }}
                 onEachFeature={(f, l) => {
                   const p = f.properties || {};
-                  const name = p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona");
+                  const name = t(p.seysmogen_ || p.hududiy_ma || "Seysmogen zona");
                   // Xaritada endi to'liq nom o'rniga FAQAT rim raqami
                   // ko'rsatiladi (v1 folium xaritasidagi kabi) — to'liq nomlar
                   // o'ng tarafdagi "Seysmogen zonalar" ro'yxatida (pastda).
