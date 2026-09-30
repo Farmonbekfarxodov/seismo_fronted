@@ -260,6 +260,7 @@ export const ru = {
   "Yoriqlar": "Разломы",
   "Yoriq: {name}": "Разлом: {name}",
   "Seysmogen zonalar": "Сейсмогенные зоны",
+  "Seysmogen zonalar:": "Сейсмогенные зоны:",
   "Seysmogen zona": "Сейсмогенная зона",
   "Zilzila": "Землетрясение",
   "Sana:": "Дата:",

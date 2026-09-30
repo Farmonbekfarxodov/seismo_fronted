@@ -80,3 +80,13 @@
   font-size: 13px;
   text-shadow: 0 0 3px #fff, 0 0 3px #fff;
 }
+
+/* XATO TUZATISH: Leaflet zoom (+/-) tugmasi dumaloq burchakli edi — tugma
+   ostida yorqin rangli qatlam (mas. pushti seysmogen zona) bo'lsa, dumaloq
+   burchakning "kesilgan" uchburchak qismidan xaritaning rangi ko'rinib
+   qolardi (tugma shakli "buzilgan"day ko'rinardi). Burchaklarni kvadrat
+   qilib, bu muammoning oldi olindi. */
+.leaflet-bar,
+.leaflet-bar a {
+  border-radius: 0 !important;
+}

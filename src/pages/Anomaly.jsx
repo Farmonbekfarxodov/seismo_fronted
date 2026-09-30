@@ -382,6 +382,23 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
     };
   }, []);
 
+  // O'ng tarafdagi "Seysmogen zonalar" ro'yxati uchun (Seismos.jsx bilan bir
+  // xil) — xaritadagi rim raqami qaysi zonaga tegishli ekanini ko'rsatadi.
+  const zoneList = useMemo(() => {
+    const features = layers?.zones?.features || [];
+    return features
+      .map((f) => {
+        const p = f.properties || {};
+        return {
+          number: p.zone_number ?? 0,
+          roman: p.roman || "",
+          name: p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona"),
+        };
+      })
+      .filter((z) => z.roman)
+      .sort((a, b) => a.number - b.number);
+  }, [layers?.zones, t]);
+
   function toggleFullscreen() {
     const el = wrapRef.current;
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -413,7 +430,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
       <style>{PULSE_CSS}</style>
 
       <button onClick={toggleFullscreen}
-        className="absolute z-[1000] bg-white border border-border rounded px-2 py-1 text-xs shadow hover:bg-ink-900"
+        className="absolute z-[1000] bg-white border border-border px-2 py-1 text-xs shadow hover:bg-ink-900"
         style={{ top: 80, left: 10 }}
         title={t("To'liq ekran")}>
         ⛶
@@ -438,10 +455,15 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
               attribution="&copy; OpenTopoMap" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Yorug'")}>
-            {/* `{s}.` subdomensiz — Seismos.jsx bilan bir xil sabab: eski
-                subdomenli manzil "API KEY REQUIRED" berib qo'yadi. */}
-            <TileLayer url="https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+            {/* XATO TUZATISH (2026-09-30): CARTO "light_all" manzili — hatto
+                `{s}.` subdomensiz shakli ham — endi "API KEY REQUIRED"
+                suvbelgisi bilan chiqadi (CARTO bepul raster CDN'ni butunlay
+                kalit talab qiladigan qilib qo'ygan). Esri'ning kalitsiz
+                "World_Street_Map" qatlamiga almashtirildi (Seismos.jsx bilan
+                bir xil, "Sputnik"dagi bilan bir xil Esri xizmati). */}
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Sputnik")}>
             <TileLayer
@@ -466,9 +488,13 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
                 onEachFeature={(f, l) => {
                   const p = f.properties || {};
                   const name = p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona");
-                  l.bindPopup(`<b>${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
-                  if (name) {
-                    l.bindTooltip(String(name), {
+                  // Xaritada endi to'liq nom o'rniga FAQAT rim raqami
+                  // ko'rsatiladi (Seismos.jsx bilan bir xil, v1 folium
+                  // xaritasidagi kabi) — to'liq nomlar o'ng tarafdagi
+                  // ro'yxatda (pastda).
+                  l.bindPopup(`<b>${p.roman ? `${p.roman} — ` : ""}${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
+                  if (p.roman) {
+                    l.bindTooltip(p.roman, {
                       permanent: true, direction: "center", className: "zone-label",
                     });
                   }
@@ -531,6 +557,23 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
           </div>
         </div>
       </div>
+
+      {/* Seysmogen zonalar ro'yxati — xaritaning O'NG tomonida (Seismos.jsx
+          bilan bir xil): xaritada faqat rim raqami, to'liq nomi shu yerda. */}
+      {zoneList.length > 0 && (
+        <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs max-h-64 overflow-y-auto"
+          style={{ minWidth: 200, maxWidth: 260 }}>
+          <b>{t("Seysmogen zonalar:")}</b>
+          <div className="mt-1 space-y-0.5">
+            {zoneList.map((z) => (
+              <div key={z.roman + z.name} className="flex items-baseline gap-1.5 py-0.5">
+                <span className="font-semibold shrink-0" style={{ color: "#8B008B" }}>{z.roman}</span>
+                <span>— {z.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

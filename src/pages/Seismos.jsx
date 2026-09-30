@@ -30,6 +30,28 @@ function FullscreenInvalidate({ trigger }) {
   return null;
 }
 
+/* XATO TUZATISH: zilzila doiralari ilgari `pane="markerPane"`da chizilardi —
+   xuddi skvajina belgilari bilan bir xil qatlamda. `preferCanvas={true}`
+   sabab, zilzilalar BITTA <canvas> elementiga chiziladi va bu canvas butun
+   xarita ko'rinish maydonini egallaydi (faqat doira chizilgan joylarda emas,
+   HAMMA YERDA sichqoncha voqealarini ushlab qoladi). Tahlil natijasi
+   kelgach zilzilalar SKVAJINALARDAN KEYIN xaritaga qo'shilgani uchun bu
+   canvas ularning ustiga chiqib, skvajina belgilariga bosish/hover qilishni
+   butunlay to'sib qo'yardi ("faqat zilzila ma'lumotlari ko'rinadi" xatosi).
+   Yechim: zilzilalar uchun ALOHIDA pane — u yer yoriqlari/seysmogen
+   zonalardan (overlayPane, z=400) YUQORI, lekin skvajina belgilaridan
+   (markerPane, z=600) PAST turadi. */
+function EarthquakePaneSetup() {
+  const map = useMap();
+  useEffect(() => {
+    if (!map.getPane("eqPane")) {
+      const pane = map.createPane("eqPane");
+      pane.style.zIndex = 450;
+    }
+  }, [map]);
+  return null;
+}
+
 // Backend: seismos_app/api_views.py
 async function fetchOptions() {
   const { data } = await apiClient.get("/seismos/api/options/");
@@ -387,6 +409,24 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
     }));
   const earthquakes = result?.map?.earthquakes ?? [];
 
+  // O'ng tarafdagi "Seysmogen zonalar" ro'yxati uchun: xaritadagi har bir
+  // rim raqami qaysi zonaga tegishli ekanini ko'rsatadi (backend har bir
+  // feature'ga zone_number/roman'ni allaqachon hisoblab beradi).
+  const zoneList = useMemo(() => {
+    const features = layers?.zones?.features || [];
+    return features
+      .map((f) => {
+        const p = f.properties || {};
+        return {
+          number: p.zone_number ?? 0,
+          roman: p.roman || "",
+          name: p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona"),
+        };
+      })
+      .filter((z) => z.roman)
+      .sort((a, b) => a.number - b.number);
+  }, [layers?.zones, t]);
+
   // Har bir tanlangan skvajinaga o'z rangi (tartib bo'yicha)
   const colorMap = useMemo(() => {
     const map = {};
@@ -470,7 +510,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
     >
       {/* To'liq ekran — eski xaritadagidek chap yuqorida (zoom ostida) */}
       <button onClick={toggleFullscreen}
-        className="absolute z-[1000] bg-white border border-border rounded px-2 py-1 text-xs shadow hover:bg-ink-900"
+        className="absolute z-[1000] bg-white border border-border px-2 py-1 text-xs shadow hover:bg-ink-900"
         style={{ top: 80, left: 10 }}
         title={t("To'liq ekran")}>
         ⛶
@@ -487,6 +527,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
         style={{ height: "100%", width: "100%", flexGrow: 1 }}
         preferCanvas={true}>
         <FullscreenInvalidate trigger={isFullscreen} />
+        <EarthquakePaneSetup />
         <LayersControl position="topright">
           {/* Fon xaritalari — eski faylga mos 4 xil.
               QO'SHILDI: "Без подписей" — yozuvsiz fon. Oddiy OpenStreetMap
@@ -496,12 +537,16 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
               bermaydi. Shuning uchun u birinchi va standart qilib qo'yildi.
               Eski standart OpenStreetMap edi (checked o'sha yerda turgan). */}
           <LayersControl.BaseLayer checked name={t("Yozuvsiz fon")}>
-            {/* MUHIM: eski `{s}.` subdomenli cartocdn manzili endi tarmoqda
-                "API KEY REQUIRED" degan yozuv bilan chiqadi — CARTO bu
-                ko'p-subdomenli eski CDN yo'lini bekor qilib, kalitsiz
-                ishlaydigan yagona domenga o'tgan (subdomensiz). */}
-            <TileLayer url="https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+            {/* XATO TUZATISH (2026-09-30): `{s}.` subdomensiz cartocdn manzili
+                ham "API KEY REQUIRED" suvbelgisi bilan chiqishda davom etdi —
+                CARTO endi bu bepul raster CDN'ni butunlay kalit talab
+                qiladigan qilib qo'ygan (URL formatiga bog'liq emas edi).
+                Shuning uchun Esri'ning haqiqatda kalitsiz "Light Gray"
+                qatlamiga o'tkazildi (pastdagi "Sputnik" qatlami bilan bir xil
+                Esri xizmati, u ham kalitsiz ishlaydi). */}
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name="OpenStreetMap">
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -512,8 +557,12 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
               attribution="&copy; OpenTopoMap" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Yorug'")}>
-            <TileLayer url="https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+            {/* XATO TUZATISH: CARTO "light_all" ham kalit talab qilardi —
+                Esri'ning yozuvli, ochiq rangli "World_Street_Map" qatlamiga
+                almashtirildi (kalitsiz, "Sputnik"dagi bilan bir xil xizmat). */}
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Sputnik")}>
             <TileLayer
@@ -538,9 +587,12 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                 onEachFeature={(f, l) => {
                   const p = f.properties || {};
                   const name = p.seysmogen_ || p.hududiy_ma || t("Seysmogen zona");
-                  l.bindPopup(`<b>${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
-                  if (name) {
-                    l.bindTooltip(String(name), {
+                  // Xaritada endi to'liq nom o'rniga FAQAT rim raqami
+                  // ko'rsatiladi (v1 folium xaritasidagi kabi) — to'liq nomlar
+                  // o'ng tarafdagi "Seysmogen zonalar" ro'yxatida (pastda).
+                  l.bindPopup(`<b>${p.roman ? `${p.roman} — ` : ""}${name}</b>${p.seysmogen1 ? "<br>" + p.seysmogen1 : ""}`);
+                  if (p.roman) {
+                    l.bindTooltip(p.roman, {
                       permanent: true, direction: "center", className: "zone-label",
                     });
                   }
@@ -558,7 +610,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
             return (
               <CircleMarker key={i} center={[eq.lat, eq.lon]}
                 radius={Math.max(st.radius, 6)}
-                pane="markerPane"
+                pane="eqPane"
                 pathOptions={{ color: "#111", fillColor: st.color, fillOpacity: 0.85, weight: 1.5 }}>
                 <LTooltip>
                   <div>
@@ -647,6 +699,24 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
           </div>
         </div>
       </div>
+
+      {/* Seysmogen zonalar ro'yxati — xaritaning O'NG tomonida. Xaritadagi
+          har bir zona markazida faqat rim raqami ko'rinadi (v1 folium
+          xaritasidagi kabi), to'liq nomi esa shu ro'yxatda, raqami bo'yicha. */}
+      {zoneList.length > 0 && (
+        <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs max-h-64 overflow-y-auto"
+          style={{ minWidth: 200, maxWidth: 260 }}>
+          <b>{t("Seysmogen zonalar:")}</b>
+          <div className="mt-1 space-y-0.5">
+            {zoneList.map((z) => (
+              <div key={z.roman + z.name} className="flex items-baseline gap-1.5 py-0.5">
+                <span className="font-semibold shrink-0" style={{ color: "#8B008B" }}>{z.roman}</span>
+                <span>— {z.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
