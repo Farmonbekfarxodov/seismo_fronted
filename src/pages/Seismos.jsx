@@ -654,8 +654,18 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
 
       </MapContainer>
 
-      {/* Legenda — xarita ichida suzuvchi quti */}
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs max-h-48 overflow-y-auto"
+      {/* Legenda — xarita ichida suzuvchi quti.
+          XATO TUZATISH: bu quti ilgari `max-h-48 overflow-y-auto` bilan
+          balandligi 192px ga cheklangan edi, lekin ichidagi ro'yxat (Mb
+          ranglari + skvajina uchburchaklari + yer yoriqlari/seysmogen
+          zona/halqa belgilari) odatda ~9 qatordan iborat va bu chegaraga
+          sig'may, pastki qatorlar (masalan "M=5/6/7 halqalari") kesilib
+          qolardi — xarita kattalashtirilganda (to'liq ekran) ham xuddi
+          shunday. Ro'yxat hajmi doimiy va kichik bo'lgani uchun (foydalanuvchi
+          ma'lumotiga bog'liq emas, Seysmogen zonalar ro'yxatidan farqli),
+          balandlik chegarasi olib tashlandi — Anomaly.jsx'dagi xuddi shu
+          quti allaqachon shunday (chegarasiz) edi. */}
+      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs"
         style={{ minWidth: 190 }}>
         {/* Ilgari alohida rus tiliga qattiq tarjima qilingan edi (Условные
             обозначения:), endi umumiy t() mexanizmiga o'tkazildi — shu bilan
@@ -702,9 +712,17 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
 
       {/* Seysmogen zonalar ro'yxati — xaritaning O'NG tomonida. Xaritadagi
           har bir zona markazida faqat rim raqami ko'rinadi (v1 folium
-          xaritasidagi kabi), to'liq nomi esa shu ro'yxatda, raqami bo'yicha. */}
+          xaritasidagi kabi), to'liq nomi esa shu ro'yxatda, raqami bo'yicha.
+          XATO TUZATISH: ro'yxatda 30+ zona bo'lishi mumkin (I dan XXXV
+          gacha) — oddiy (520px) xarita balandligida hammasi sig'maydi,
+          shuning uchun u yerda ixcham `max-h-64` (scroll bilan) qoldirildi.
+          Lekin xarita to'liq ekranga kattalashtirilganda (`isFullscreen`,
+          balandlik 100vh) bo'sh joy yetarli — shu holatda chegara ancha
+          kattalashtirildi (`85vh`), shunda deyarli barcha zonalar bir
+          vaqtda, scrollsiz to'liq ko'rinadi; juda uzun ro'yxat uchun scroll
+          hali ham xavfsizlik to'ri sifatida qoladi. */}
       {zoneList.length > 0 && (
-        <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs max-h-64 overflow-y-auto"
+        <div className={`absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs overflow-y-auto ${isFullscreen ? "max-h-[85vh]" : "max-h-64"}`}
           style={{ minWidth: 200, maxWidth: 260 }}>
           <b>{t("Seysmogen zonalar:")}</b>
           <div className="mt-1 space-y-0.5">

@@ -559,9 +559,12 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
       </div>
 
       {/* Seysmogen zonalar ro'yxati — xaritaning O'NG tomonida (Seismos.jsx
-          bilan bir xil): xaritada faqat rim raqami, to'liq nomi shu yerda. */}
+          bilan bir xil): xaritada faqat rim raqami, to'liq nomi shu yerda.
+          XATO TUZATISH: to'liq ekranda (`isFullscreen`) balandlik chegarasi
+          kattalashtirildi (`85vh`), shunda ro'yxat deyarli to'liq scrollsiz
+          ko'rinadi — Seismos.jsx'dagi bilan bir xil. */}
       {zoneList.length > 0 && (
-        <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs max-h-64 overflow-y-auto"
+        <div className={`absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs overflow-y-auto ${isFullscreen ? "max-h-[85vh]" : "max-h-64"}`}
           style={{ minWidth: 200, maxWidth: 260 }}>
           <b>{t("Seysmogen zonalar:")}</b>
           <div className="mt-1 space-y-0.5">
