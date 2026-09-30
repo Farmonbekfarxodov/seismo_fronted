@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import { formatParam } from "../utils/chemFormat";
 
 /*
  * Eski /upload/ sahifasining aynan nusxasi — 4 ta bo'lim:
@@ -459,7 +460,7 @@ function SpmSection() {
               </p>
               {r.params.length > 0 && (
                 <p className="text-muted mt-1">
-                  {r.params.map((p) => t("{name}: {count} ta yangilandi", { name: p.name, count: p.updated })).join(" · ")}
+                  {r.params.map((p) => t("{name}: {count} ta yangilandi", { name: formatParam(p.name), count: p.updated })).join(" · ")}
                 </p>
               )}
               {r.warnings.map((w, j) => (

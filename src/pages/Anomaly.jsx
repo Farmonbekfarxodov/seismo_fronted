@@ -11,6 +11,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
+import { formatParam } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -190,7 +191,7 @@ function AnalysisTab() {
                         ? "border-teal text-teal bg-teal/10"
                         : "border-border text-muted hover:text-ink-100"
                     }`}>
-                    {p}
+                    {formatParam(p)}
                   </button>
                 ))}
               </div>
@@ -527,7 +528,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
                   eventHandlers={{ click: () => onWellClick?.(w.name) }}>
                   <LTooltip>
                     <b>{w.name}</b><br />
-                    <span style={{ color: "red" }}>⚠️ {t("Anomaliya: {params}", { params: w.params.join(", ") })}</span><br />
+                    <span style={{ color: "red" }}>⚠️ {t("Anomaliya: {params}", { params: w.params.map(formatParam).join(", ") })}</span><br />
                     <span style={{ color: "#6c757d" }}>{t("Grafigini birinchi o'ringa chiqarish uchun bosing")}</span>
                   </LTooltip>
                   <Popup maxWidth={480}>
@@ -651,7 +652,7 @@ function WellInfoPopup({ well, onGoToChart }) {
           )}
           {well.anomalous ? (
             <p style={{ marginTop: 8, color: "#dc3545", fontWeight: "bold" }}>
-              ⚠️ {t("Anomaliya: {params}", { params: well.params.join(", ") })}
+              ⚠️ {t("Anomaliya: {params}", { params: well.params.map(formatParam).join(", ") })}
             </p>
           ) : (
             <p style={{ marginTop: 8, color: "#198754", fontStyle: "italic" }}>
@@ -704,7 +705,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
       {
         x: result.dates, y: result.values,
         type: "scatter", mode: "lines",
-        name: result.param,
+        name: formatParam(result.param),
         line: { color: "blue", width: 1.5 },
         hovertemplate: `<b>${t("Sana:")}</b> %{x|%d.%m.%Y}<br><b>${t("Qiymat:")}</b> %{y:.3f}<extra></extra>`,
       },
@@ -751,7 +752,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
 
   const layout = useMemo(() => {
     const l = {
-      title: { text: `<b>${result.well} - ${result.param}</b>` },
+      title: { text: `<b>${result.well} - ${formatParam(result.param)}</b>` },
       xaxis: { title: { text: t("Sana") }, range: result.x_range, gridcolor: "#DEE2E6" },
       yaxis: { gridcolor: "#DEE2E6", automargin: true },
       hovermode: "x unified",
@@ -781,7 +782,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
       <div className="flex items-baseline justify-between mb-1">
         <h3 className="text-base">
           {focused && <span className="text-amber mr-1.5" title={t("Xaritada tanlangan")}>●</span>}
-          {result.well} — <span className="text-teal font-mono">{result.param}</span>
+          {result.well} — <span className="text-teal font-mono">{formatParam(result.param)}</span>
         </h3>
         <p className="text-xs text-amber font-mono">{t("{count} ta anomaliya", { count: result.anomalies.length })}</p>
       </div>
@@ -835,7 +836,7 @@ function HistoryTab() {
               <tr key={r.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-mono text-muted">{r.created_at?.slice(0, 10)}</td>
                 <td className="px-4 py-3">{r.skvajina}</td>
-                <td className="px-4 py-3 font-mono text-teal">{r.parameter}</td>
+                <td className="px-4 py-3 font-mono text-teal">{formatParam(r.parameter)}</td>
                 <td className="px-4 py-3 text-muted">{r.time_period_label}</td>
                 <td className="px-4 py-3 text-amber font-mono">{r.detected_anomalies_count}</td>
                 <td className="px-4 py-3 font-mono text-muted">

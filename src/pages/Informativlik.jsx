@@ -5,6 +5,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
+import { formatParam } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -131,7 +132,7 @@ export default function Informativlik() {
                         ? "border-teal text-teal bg-teal/10"
                         : "border-border text-muted hover:text-ink-100"
                     }`}>
-                    {p}
+                    {formatParam(p)}
                   </button>
                 ))}
               </div>
@@ -210,7 +211,7 @@ export default function Informativlik() {
                           <tr key={i} className="border-b border-border last:border-0">
                             <td className="px-3 py-2.5 text-muted">{i + 1}</td>
                             <td className="px-3 py-2.5">{r.skvajina}</td>
-                            <td className="px-3 py-2.5 font-mono text-teal">{r.parametr}</td>
+                            <td className="px-3 py-2.5 font-mono text-teal">{formatParam(r.parametr)}</td>
                             <td className="px-3 py-2.5 font-mono">{r.T}</td>
                             <td className="px-3 py-2.5 font-mono">{r.t}</td>
                             <td className="px-3 py-2.5 font-mono">{r.n}</td>
@@ -282,7 +283,7 @@ function InfChart({ series }) {
   const data = [
     {
       x: series.dates, y: series.values, type: "scatter", mode: "lines",
-      name: series.param, line: { color: "#198754", width: 1.3 },
+      name: formatParam(series.param), line: { color: "#198754", width: 1.3 },
       hovertemplate: `%{x}<br>${t("Qiymat")}: %{y}<extra></extra>`,
     },
     { x: xr, y: [series.mean, series.mean], type: "scatter", mode: "lines",
@@ -299,7 +300,7 @@ function InfChart({ series }) {
     <div className="card">
       <div className="flex items-baseline justify-between mb-2">
         <h3 className="text-base">
-          {series.key} — <span className="text-teal font-mono">{series.param}</span>
+          {series.key} — <span className="text-teal font-mono">{formatParam(series.param)}</span>
         </h3>
         <p className="text-xs text-muted font-mono">
           q=<span className="text-amber">{series.q}</span> · {t("{captured}/{total} zilzila tutildi", {

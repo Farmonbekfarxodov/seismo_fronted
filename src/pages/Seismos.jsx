@@ -11,6 +11,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
+import { formatParam } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -190,7 +191,7 @@ export default function Seismos() {
                         <input type="checkbox" className="accent-teal shrink-0"
                           checked={selectedParams.includes(p)}
                           onChange={() => toggle(selectedParams, setSelectedParams, p)} />
-                        <span className="font-mono">{p}</span>
+                        <span className="font-mono">{formatParam(p)}</span>
                       </label>
                     ))}
                   </div>
@@ -843,7 +844,7 @@ function SeriesChart({ series }) {
     const traces = [
       {
         x: series.dates, y: series.values,
-        type: "scatter", mode: "lines", name: series.param,
+        type: "scatter", mode: "lines", name: formatParam(series.param),
         line: { color: "#0d6efd", width: 1.4 },
         hovertemplate: `%{x}<br>${t("Qiymat")}: %{y}<extra></extra>`,
       },
@@ -943,7 +944,7 @@ function SeriesChart({ series }) {
       {/* 3-rasmdagi karta sarlavhasi: teal nom + PNG tugmasi */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="text-base font-semibold text-teal">
-          {series.key} - {series.param}
+          {series.key} - {formatParam(series.param)}
         </h3>
         <button onClick={downloadPng}
           className="px-3 py-1.5 text-sm rounded-md border border-teal text-teal hover:bg-blue-50 transition-colors">
@@ -955,11 +956,11 @@ function SeriesChart({ series }) {
           data={data}
           onClick={handlePlotClick}
           layout={{
-            title: { text: `${series.key} - ${series.param}`, font: { size: 17 } },
+            title: { text: `${series.key} - ${formatParam(series.param)}`, font: { size: 17 } },
             height: 420,
             margin: { l: 60, r: 60, t: 45, b: 40 },
             xaxis: { gridcolor: "#DEE2E6" },
-            yaxis: { title: { text: t("{param} Qiymati", { param: series.param }) }, gridcolor: "#DEE2E6", automargin: true },
+            yaxis: { title: { text: t("{param} Qiymati", { param: formatParam(series.param) }) }, gridcolor: "#DEE2E6", automargin: true },
             yaxis2: {
               title: { text: t("Magnituda (Mb)") },
               overlaying: "y", side: "right",

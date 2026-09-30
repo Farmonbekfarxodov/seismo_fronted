@@ -5,6 +5,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
+import { formatParam } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -132,7 +133,7 @@ export default function EpochAnalysis() {
                           <input type="checkbox" className="accent-teal shrink-0"
                             checked={selectedParams.includes(p)}
                             onChange={() => toggle(selectedParams, setSelectedParams, p)} />
-                          <span className="font-mono">{p}</span>
+                          <span className="font-mono">{formatParam(p)}</span>
                         </label>
                       ))}
                     </div>
@@ -290,13 +291,13 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
       {
         x: realX, y: realY,
         type: "scatter", mode: "markers",
-        name: chart.param,
+        name: formatParam(chart.param),
         marker: { size: 5, color: "#0d6efd" },
         customdata: realDates,
         hovertemplate:
           "<b>%{customdata}</b><br>" +
           `${t("Zilziladan:")} %{x} ${t("kun")}<br>` +
-          `${chart.param}: %{y}<extra></extra>`,
+          `${formatParam(chart.param)}: %{y}<extra></extra>`,
         showlegend: false,
       },
       // 4-qatlam: sigma chiziqlari (butun tarix bo'yicha hisoblangan)
@@ -331,7 +332,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-wrap gap-2">
         <div>
           <h3 className="text-base font-semibold text-teal">
-            {chart.key} — {chart.param}
+            {chart.key} — {formatParam(chart.param)}
           </h3>
           <p className="text-xs text-muted mt-0.5">
             {t("Zilzila:")} {eqDate} · Mb {chart.earthquake.mb}
@@ -355,7 +356,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
               title: { text: t("Zilziladan kunlar (0 — zilzila kuni)") },
               gridcolor: "#DEE2E6", zeroline: false,
             },
-            yaxis: { title: { text: t("{param} qiymati", { param: chart.param }) }, gridcolor: "#DEE2E6", automargin: true },
+            yaxis: { title: { text: t("{param} qiymati", { param: formatParam(chart.param) }) }, gridcolor: "#DEE2E6", automargin: true },
             shapes: [{
               type: "line", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1,
               line: { color: "#212529", width: 2.5 },
