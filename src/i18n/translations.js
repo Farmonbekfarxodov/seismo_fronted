@@ -1,12 +1,14 @@
-// Ruscha tarjimalar lug'ati.
+// Ruscha va inglizcha tarjimalar lug'ati.
 //
 // Kalit = interfeysdagi ASL O'ZBEKCHA matn (komponentlarda t("...") ichiga
-// yoziladigan matnning aynan o'zi). Qiymat = shu matnning ruscha tarjimasi.
+// yoziladigan matnning aynan o'zi). Qiymat = shu matnning tarjimasi.
 //
 // Yangi sahifa tarjima qilinganda shu faylga yangi qatorlar qo'shiladi —
 // mavjud kalitlar o'chirilmaydi yoki o'zgartirilmaydi, faqat qo'shiladi.
-// Agar biror matn shu yerda topilmasa, LanguageContext uni o'zbekcha
-// holicha qaytaradi (sahifa hech qachon buzilmaydi).
+// Har bir yangi kalit HAR IKKALA lug'atga (`ru` va `en`) qo'shilishi kerak,
+// aks holda o'sha til uchun asl o'zbekcha matn ko'rinadi. Agar biror matn
+// shu yerda topilmasa, LanguageContext uni o'zbekcha holicha qaytaradi
+// (sahifa hech qachon buzilmaydi).
 
 export const ru = {
   // ===== App.jsx =====
@@ -339,4 +341,339 @@ export const ru = {
   "Davr": "Период",
   "Aniqlangan": "Обнаружено",
   "Oraliq": "Интервал",
+};
+
+// Inglizcha tarjimalar lug'ati. Kalitlar `ru` bilan bir xil (asl o'zbekcha
+// matn) — tuzilishi va tartibi ham bir xil, faqat qiymatlar inglizcha.
+export const en = {
+  // ===== App.jsx =====
+  "Sahifa yuklanmoqda...": "Page loading...",
+
+  // ===== Layout.jsx (navbar) =====
+  "Umumiy": "Overview",
+  "Magnitka": "Magnetometer",
+  "Anomaliya": "Anomaly",
+  "Informativlik": "Informativeness",
+  "Katalog": "Catalog",
+  "Zilzila tahlili": "Earthquake analysis",
+  "Bazaga yuklash": "Upload to database",
+  "GGS tahlili": "GGS analysis",
+  "Chiqish": "Log out",
+
+  // ===== Login.jsx =====
+  "Seysmologiya": "Seismology",
+  "Tizimga kirish": "Sign in",
+  "Foydalanuvchi nomi": "Username",
+  "Bu maydon majburiy": "This field is required",
+  "Parol": "Password",
+  "Tekshirilmoqda...": "Checking...",
+  "Kirish": "Sign in",
+
+  // ===== Dashboard.jsx =====
+  "Seysmoprognostik ma'lumotlarni tahlil qilish boshqaruv paneli":
+    "Dashboard for seismic-forecast data analysis",
+  "Seysmik tahlil": "Seismic analysis",
+  "Quduq tanlash, xarita va sigma-tahlil grafiklari":
+    "Well selection, map and sigma-analysis charts",
+  "Har bir zilzila atrofidagi oyna bo'yicha grafiklar va sigma chiziqlari":
+    "Charts and sigma lines for a window around each earthquake",
+  "O'lchov dinamikasi va grafiklar": "Measurement dynamics and charts",
+  "Sigma-tahlil, xarita va tarix": "Sigma analysis, map and history",
+  "q-baholash, grafiklar va Excel eksport": "q-estimation, charts and Excel export",
+  "Zilzilalar katalogi": "Earthquake catalog",
+  "Baza yuklash": "Database upload",
+  "Tashqi manbalardan sinxronlash": "Sync from external sources",
+
+  // ===== ErrorBoundary.jsx =====
+  "Kutilmagan xatolik yuz berdi": "An unexpected error occurred",
+  "Sahifani qayta yuklab ko'ring. Muammo takrorlansa, qaysi amalda chiqqanini eslab qoling — bu tuzatishga yordam beradi.":
+    "Try reloading the page. If the problem repeats, remember which action caused it — this will help fix it.",
+  "Sahifani qayta yuklash": "Reload page",
+
+  // ===== LazyRender.jsx =====
+  "Grafik tayyorlanmoqda...": "Preparing chart...",
+
+  // ===== Magnitka.jsx =====
+  "Magnitka o'lchovlari": "Magnetometer measurements",
+  "Stansiyalarni tanlang va o'lchov dinamikasini solishtiring":
+    "Select stations and compare measurement dynamics",
+  "Stansiyalar": "Stations",
+  "Yuklanmoqda...": "Loading...",
+  "Stansiyalarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.":
+    "Could not load stations. Check that the backend is running.",
+  "Hammasini tanlash": "Select all",
+  "Boshlanish sanasi": "Start date",
+  "Tugash sanasi": "End date",
+  "Sanalar tanlanmasa, stantsiyaning barcha ma'lumotlari ko'rsatiladi":
+    "If no dates are selected, all of the station's data is shown",
+  "Magnitudalarni ko'rsatish": "Show magnitudes",
+  "Min magnituda": "Min. magnitude",
+  "Grafikni ko'rish uchun kamida bitta stansiya tanlang":
+    "Select at least one station to view the chart",
+  "Ma'lumot yuklanmoqda...": "Data loading...",
+  "🌋 Magnitudalar ko'rsatilmoqda (≥ M{mag}, M/lgR≥2.5, {count} ta zilzila)":
+    "🌋 Showing magnitudes (≥ M{mag}, M/lgR≥2.5, {count} earthquakes)",
+  "{base} bilan mos vaqtli o'lchov topilmadi — grafik chizilmadi.":
+    "No measurement matching {base}'s time was found — chart not drawn.",
+  "Δ (farq, {base} ga nisbatan)": "Δ (difference, relative to {base})",
+  "Qiymat": "Value",
+  "(baza stantsiya — 10 minutlik o'rtacha)": "(base station — 10-minute average)",
+  "(Δ — {base} ga nisbatan)": "(Δ — relative to {base})",
+  "Grafikni yuklash (PNG)": "Download chart (PNG)",
+
+  // ===== Catalog.jsx =====
+  "Xatolik yuz berdi": "An error occurred",
+  "{added} ta qo'shildi{errors}": "{added} added{errors}",
+  ", {count} ta xato": ", {count} errors",
+  "Umumiy baza:": "Total database:",
+  "{start} dan {end} gacha": "from {start} to {end}",
+  "API'dan yangilash": "Update from API",
+  "Fayldan yuklash": "Upload from file",
+  "Qidirish": "Search",
+  "Tozalash": "Clear",
+  "Qidiruv natijalari ({count} ta)": "Search results ({count})",
+  "So'nggi 20 ta yozuv": "Last 20 records",
+  "Ma'lumotni yuklab bo'lmadi": "Could not load data",
+  "Berilgan sanalar oralig'ida zilzilalar topilmadi.": "No earthquakes were found in the given date range.",
+  "Sana": "Date",
+  "Vaqt": "Time",
+  "Kenglik/Uzunlik": "Latitude/Longitude",
+  "Chuqurlik": "Depth",
+  "Epitsentr": "Epicenter",
+  "Qo'lda kiritish": "Manual entry",
+  "Kenglik": "Latitude",
+  "Uzunlik": "Longitude",
+  "Chuqurlik (km)": "Depth (km)",
+  "Magnitud": "Magnitude",
+  "Saqlanmoqda...": "Saving...",
+  "Qo'shish": "Add",
+
+  // ===== DownloadBase.jsx =====
+  "Ma'lumotlarni bazaga yuklash": "Upload data to the database",
+  "Stansiyani tanlang:": "Select a station:",
+  "Hammasi": "All",
+  "Quduqni tanlang:": "Select a well:",
+  "Yakuniy sana boshlang'ich sanadan keyin bo'lishi kerak!":
+    "The end date must be after the start date!",
+  "1) Saytdan (API) avtomatik yuklab bazaga yozish": "1) Automatically download from the site (API) and save to the database",
+  "Boshlang'ich sana:": "Start date:",
+  "Yakuniy sana:": "End date:",
+  "API dan Yuklash": "Download from API",
+  "Iltimos Excel fayl tanlang!": "Please select an Excel file!",
+  "Fayl nomi 'Gidrogeoseysmologiya' bilan boshlanishi shart!":
+    "The file name must start with 'Gidrogeoseysmologiya'!",
+  "Excel yuklanmoqda...": "Excel loading...",
+  "2) Excel faylni o'qib bazaga yozish": "2) Read the Excel file and write it to the database",
+  "Talab: fayl nomi": "Requirement: file name",
+  "so'zi bilan boshlanishi shart (masalan:": "must start with the word (for example:",
+  "Excel fayl (.xlsx):": "Excel file (.xlsx):",
+  "Excel dan Yuklash": "Upload from Excel",
+  "Yangi bazaga ko'chirilmoqda...": "Transferring to the new database...",
+  "3) Ma'lumotlarni geoseysmoga yuklash": "3) Upload data to geoseysmo",
+  "Geoseysmoga yuklash": "Upload to geoseysmo",
+  "Magnitka ma'lumotlari yuklanmoqda...": "Magnetometer data loading...",
+  "4) Magnitka ma'lumotlarini bazaga yuklash": "4) Upload magnetometer data to the database",
+  "Magnitka ma'lumotlarini yuklash": "Upload magnetometer data",
+  "Kamida bitta fayl tanlang!": "Select at least one file!",
+  "Fayl nomi 'Gidrogeoseysmologiya' bilan boshlanib .xlsx bo'lishi shart:":
+    "The file name must start with 'Gidrogeoseysmologiya' and be .xlsx:",
+  "Papka yo'lini kiriting!": "Enter the folder path!",
+  "5) SPM fayldan geoseysmoga yuklash": "5) Upload from an SPM file to geoseysmo",
+  "Gidrogeoseysmologiya-*.xlsx fayllardagi o'lchovlar geoseysmo bazasiga (3-bo'lim bilan bir xil server) yoziladi. Har parametr uchun oxirgi to'ldirilgan sanadan keyingi, bo'sh bo'lmagan qiymatlar qo'shiladi — 0 ham amaldagi o'lchov sifatida saqlanadi.":
+    "Measurements from Gidrogeoseysmologiya-*.xlsx files are written to the geoseysmo database (the same server as in section 3). For each parameter, non-empty values after the last filled date are added — 0 is also saved as a real measurement.",
+  "Fayllarni yuklash": "Uploading files",
+  "Serverdagi papkadan": "From a folder on the server",
+  "Excel fayllar (bir nechtasini tanlash mumkin):": "Excel files (you can select several):",
+  "{count} ta fayl tanlandi": "{count} files selected",
+  "Serverdagi papka yo'li:": "Folder path on the server:",
+  "O'qilgandan keyin fayllar papkadan o'chirilsin": "Delete files from the folder after reading",
+  "(desktop dastur xatti-harakati)": "(same behavior as the desktop app)",
+  "Yuklanmoqda... (fayllar soniga qarab vaqt oladi)": "Loading... (time depends on the number of files)",
+  "Geoseysmoga yozish": "Write to geoseysmo",
+  "{name}: {count} ta yangilandi": "{name}: {count} updated",
+
+  // ===== Informativlik.jsx =====
+  "Informativlik tahlili": "Informativeness analysis",
+  "Parametrlarning zilzila oldi anomaliyalarini ko'rsatish qobiliyatini baholash":
+    "Evaluating parameters' ability to reveal pre-seismic anomalies",
+  "Boshlang'ich ma'lumotlarni yuklab bo'lmadi.": "Could not load the initial data.",
+  "Skvajinalar ({count})": "Wells ({count})",
+  "Parametrlar ({count})": "Parameters ({count})",
+  "Sozlamalar": "Settings",
+  "Oyna (yil)": "Window (years)",
+  "Anom. davomiyligi": "Anomaly duration",
+  "Std faktor (σ)": "Std factor (σ)",
+  "Oldin (kun)": "Before (days)",
+  "Keyin (kun)": "After (days)",
+  "Median oynasi (ixtiyoriy)": "Median window (optional)",
+  "Bo'sh — median yo'q": "Empty — no median",
+  "Boshlanish": "Start",
+  "Tugash": "End",
+  "Hisoblanmoqda...": "Calculating...",
+  "Tahlilni boshlash": "Start analysis",
+  "Tahlilda xatolik yuz berdi": "An error occurred during analysis",
+  "Natijalar jadvali": "Results table",
+  "(q bo'yicha saralangan)": "(sorted by q)",
+  "Tayyorlanmoqda...": "Preparing...",
+  "Excel yuklab olish": "Download Excel",
+  "Skvajina": "Well",
+  "Parametr": "Parameter",
+  "Ishonchlilik": "Reliability",
+  "O'rtacha": "Average",
+  "{captured}/{total} zilzila tutildi": "{captured}/{total} earthquakes captured",
+  "Ko'k chiziq": "Blue line",
+  "— anomaliya tomonidan \"tutilgan\" zilzila ·": "— earthquake \"captured\" by the anomaly ·",
+  "Kulrang": "Gray",
+  "— tutilmagan": "— not captured",
+
+  // ===== EpochAnalysis.jsx =====
+  "Boshlang'ich ma'lumotlarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.":
+    "Could not load the initial data. Check that the backend is running.",
+  "ZILZILA TAHLILI": "EARTHQUAKE ANALYSIS",
+  "Har bir topilgan zilzila uchun alohida grafik: zilzila kuni — 0, chapda undan oldingi, o'ngda keyingi kunlar":
+    "A separate chart for each earthquake found: day of the earthquake — 0, preceding days on the left, following days on the right",
+  "Zilziladan necha kun oldin": "Days before the earthquake",
+  "Zilziladan necha kun keyin": "Days after the earthquake",
+  "Sigma (σ) ko'paytuvchisi": "Sigma (σ) multiplier",
+  "Sigma chiziqlari": "Sigma lines",
+  "Grafiklarda ko'rsatilsin": "Show on charts",
+  "Sanalar oralig'i qidiriladigan zilzilalarni cheklaydi. Har bir grafik oynasi esa yuqoridagi kun sonlari bo'yicha chiziladi.":
+    "The date range limits the earthquakes searched for. Each chart's window is drawn using the day counts above.",
+  "Tahlil qilinmoqda...": "Analyzing...",
+  "Tahlil qilish": "Analyze",
+  "Topildi:": "Found:",
+  "ta grafik": "charts",
+  "(chegara: 200 ta, qolganini ko'rish uchun tanlovni toraytiring)":
+    "(limit: 200 — narrow the selection to see the rest)",
+  "Tanlangan shartlarga mos zilzila topilmadi. Magnituda yoki M/lgR chegarasini pasaytirib ko'ring.":
+    "No earthquake matching the selected conditions was found. Try lowering the magnitude or M/lgR threshold.",
+  "Taxminiy (ma'lumot yo'q)": "Estimated (no data)",
+  "Haqiqiy o'lchov": "Actual measurement",
+  "Zilziladan:": "From the earthquake:",
+  "kun": "days",
+  "Zilzila:": "Earthquake:",
+  "Masofa": "Distance",
+  "Ma'lumotli kunlar:": "Days with data:",
+  "Zilziladan kunlar (0 — zilzila kuni)": "Days from the earthquake (0 — day of the earthquake)",
+  "{param} qiymati": "{param} value",
+  "Skvajinalar": "Wells",
+  "Parametrlar": "Parameters",
+  "Min Magnituda": "Min. magnitude",
+
+  // ===== Seismos.jsx =====
+  "SEYSMOPROGNOSTIK TAHLIL": "SEISMIC-FORECAST ANALYSIS",
+  "Magnituda": "Magnitude",
+  "Sigma (σ)": "Sigma (σ)",
+  "Sigma": "Sigma",
+  "Yillik Sigma davri (ixtiyoriy):": "Annual sigma period (optional):",
+  "Yillar soni (masalan: 2)": "Number of years (e.g. 2)",
+  "M/lgR bo'yicha": "By M/lgR",
+  "Mb bo'yicha": "By Mb",
+  "Mediana": "Median",
+  "Tanlanmagan": "Not selected",
+  "Ko'rsatish nazorati": "Display controls",
+  "Xarita ko'rsatilsin": "Show map",
+  "Grafiklar ko'rsatilsin": "Show charts",
+  "Mavjud ma'lumotlar oralig'i:": "Available data range:",
+  "dan": "from",
+  "gacha": "to",
+  "Ma'lumot topilmadi.": "No data found.",
+  "Barcha skvajinalar xaritasi": "Map of all wells",
+  "Xarita qatlamlari (yoriqlar, seysmogen zonalar) yuklanmoqda...":
+    "Map layers (faults, seismogenic zones) loading...",
+  "Yoriqlar va seysmogen zonalarni yuklab bo'lmadi": "Could not load faults and seismogenic zones",
+  "server xatosi:": "server error:",
+  "serverga ulanib bo'lmadi": "could not connect to the server",
+  "Django terminalidagi xatoni tekshiring — ko'pincha sababi Redis ishlamayotgani yoki shapefile'lar yo'qligi bo'ladi.":
+    "Check the error in the Django terminal — the usual cause is Redis not running or missing shapefiles.",
+  "Tanlangan quduq va parametrlar uchun ma'lumot topilmadi.":
+    "No data found for the selected well and parameters.",
+  "To'liq ekran": "Fullscreen",
+  "M={m}, R={r} km (M/lgR={mlgr})": "M={m}, R={r} km (M/lgR={mlgr})",
+  "Yozuvsiz fon": "Unlabeled base",
+  "Relyef": "Terrain",
+  "Yorug'": "Light",
+  "Sputnik": "Satellite",
+  "Yoriqlar": "Faults",
+  "Yoriq: {name}": "Fault: {name}",
+  "Seysmogen zonalar": "Seismogenic zones",
+  "Seysmogen zonalar:": "Seismogenic zones:",
+  "Seysmogen zona": "Seismogenic zone",
+  "Zilzila": "Earthquake",
+  "Sana:": "Date:",
+  "Magnituda (Mb):": "Magnitude (Mb):",
+  "Chuqurlik (km):": "Depth (km):",
+  "Masofa (km):": "Distance (km):",
+  "Shartli belgilar:": "Legend:",
+  "Zilzila Mb > 2.8": "Earthquake Mb > 2.8",
+  "Zilzila Mb 2.0–2.8": "Earthquake Mb 2.0–2.8",
+  "Zilzila Mb < 2.0": "Earthquake Mb < 2.0",
+  "Zilzila Mb ≥ 6.0": "Earthquake Mb ≥ 6.0",
+  "Zilzila Mb 5.0–5.9": "Earthquake Mb 5.0–5.9",
+  "Zilzila Mb 4.0–4.9": "Earthquake Mb 4.0–4.9",
+  "Zilzila Mb < 4.0": "Earthquake Mb < 4.0",
+  "Tanlangan skvajinalar": "Selected wells",
+  "Tanlanmagan skvajinalar": "Unselected wells",
+  "Yer yoriqlari": "Faults",
+  "M=5/6/7 halqalari — sezgirlik zonasi": "M=5/6/7 rings — sensitivity zone",
+  "Nomi": "Name",
+  "Quduq turi": "Well type",
+  "Seysmotektonik holat": "Seismotectonic condition",
+  "Strategrafik taqsimoti": "Stratigraphic distribution",
+  "Litologik tarkibi": "Lithological composition",
+  "Skvajina ma'lumotlari": "Well information",
+  "◉ Halqalarni o'chirish": "◉ Hide rings",
+  "◯ M=5/6/7 halqalarini ko'rsatish": "◯ Show M=5/6/7 rings",
+  "Ma'lumot yo'q": "No data",
+  "Mineralizatsiya:": "Mineralization:",
+  "Mineralizatsiya": "Mineralization",
+  "Tanlangan skvajina": "Selected well",
+  "Tanlanmagan skvajina": "Unselected well",
+  "Yillik UB": "Annual UB",
+  "Yillik LB": "Annual LB",
+  "Zilzila (Mb)": "Earthquake (Mb)",
+  "Masofa:": "Distance:",
+  "Chuqurlik:": "Depth:",
+  "{param} Qiymati": "{param} value",
+  "Magnituda (Mb)": "Magnitude (Mb)",
+
+  // ===== Anomaly.jsx =====
+  "Anomaliya tahlili": "Anomaly analysis",
+  "Sigma chegarasidan chetlashgan ketma-ket qiymatlarni aniqlash":
+    "Detecting consecutive values that deviate beyond the sigma threshold",
+  "Tahlil": "Analysis",
+  "Tarix": "History",
+  "Quduqlar ({count})": "Wells ({count})",
+  "Davr (oy)": "Period (months)",
+  "Min ketma-ketlik": "Min. sequence",
+  "Oxirgi kunlar": "Last days",
+  "Min magnituda (ixtiyoriy)": "Min. magnitude (optional)",
+  "Bo'sh — zilzilalar ko'rsatilmaydi": "Empty — earthquakes not shown",
+  "ta skvajinada anomaliya topildi": "wells with an anomaly found",
+  "{count} ta grafik": "{count} charts",
+  "Tanlangan mezonlar bo'yicha so'nggi {days} kunda anomaliya topilmadi.":
+    "No anomaly was found in the last {days} days for the selected criteria.",
+  "grafiklari birinchi o'ringa chiqarildi ({count} ta)": "charts moved to the front ({count})",
+  "uchun grafik yo'q — bu skvajinada anomaliya topilmagan": "no chart — no anomaly was found for this well",
+  "Tartibni tiklash": "Restore order",
+  "Normal skvajinalar": "Normal wells",
+  "Normal": "Normal",
+  "Anomal skvajinalar": "Anomalous wells",
+  "Anomaliya: {params}": "Anomaly: {params}",
+  "Grafigini birinchi o'ringa chiqarish uchun bosing": "Click to move its chart to the front",
+  "Anomal skvajina": "Anomalous well",
+  "Normal skvajina": "Normal well",
+  "Yer yorig'i": "Fault",
+  "Grafigiga o'tish": "Go to chart",
+  "Anomaliya topilmadi": "No anomaly found",
+  "Zilzilalar": "Earthquakes",
+  "Qiymat:": "Value:",
+  "Xaritada tanlangan": "Selected on the map",
+  "{count} ta anomaliya": "{count} anomalies",
+  "({count} ta)": "({count})",
+  "Tarixni yuklab bo'lmadi.": "Could not load the history.",
+  "Hozircha yozuvlar yo'q.": "No records yet.",
+  "Davr": "Period",
+  "Aniqlangan": "Detected",
+  "Oraliq": "Interval",
 };

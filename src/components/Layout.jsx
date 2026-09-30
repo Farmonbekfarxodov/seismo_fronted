@@ -6,7 +6,8 @@ import { useLanguage } from "../i18n/LanguageContext";
 export default function Layout() {
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
-  const { lang, toggleLang, t } = useLanguage();
+  const { lang, setLang, langs, t } = useLanguage();
+  const LANG_LABELS = { uz: "UZ", ru: "RU", en: "EN" };
 
   function handleLogout() {
     logout();
@@ -58,12 +59,24 @@ export default function Layout() {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            {/* Til almashtirish tugmasi — barcha sahifalarda bitta joyda,
-                chunki Layout barcha ichki sahifalarni o'rab turadi */}
-            <button onClick={toggleLang} title="Til / Язык"
-              className="px-3 py-1.5 text-sm font-semibold rounded-md border border-ink-100 text-ink-100 hover:bg-ink-900 transition-colors">
-              {lang === "uz" ? "RU" : "UZ"}
-            </button>
+            {/* Til tanlash — barcha sahifalarda bitta joyda, chunki
+                Layout barcha ichki sahifalarni o'rab turadi. Uchta til
+                (uz/ru/en) bo'lgani uchun oddiy toggle tugmasi o'rniga
+                segmentli tanlov ishlatiladi — joriy til doim ko'rinib
+                turadi, qolgan ikkitasidan birini bosib o'tish mumkin. */}
+            <div title="Til / Язык / Language"
+              className="flex items-center rounded-md border border-ink-100 overflow-hidden">
+              {langs.map((code) => (
+                <button key={code} onClick={() => setLang(code)}
+                  className={`px-2.5 py-1.5 text-sm font-semibold transition-colors ${
+                    lang === code
+                      ? "bg-teal text-white"
+                      : "text-ink-100 hover:bg-ink-900"
+                  }`}>
+                  {LANG_LABELS[code]}
+                </button>
+              ))}
+            </div>
             <NavLink to="/download-base"
               className="px-3 py-1.5 text-sm font-medium rounded-md border border-green-600 text-green-700 hover:bg-green-50 transition-colors">
               {t("Bazaga yuklash")}
