@@ -6,9 +6,18 @@ import { useLanguage } from "../i18n/LanguageContext";
 const BASE = "/catalog-list";
 
 // fetchCatalog endi parametrlarni oladi
+//
+// MUHIM: backend (`upload_catalog_app/views.py`, `catalog_list`) query
+// parametrlarni `start_date`/`end_date` nomi bilan kutadi, frontend state
+// esa `start`/`end` deb ataladi. Ilgari bu ikkisi to'g'ridan-to'g'ri
+// yuborilardi — backend ularni tanimay har doim filtrsiz "so'nggi 20 ta"
+// qaytarardi (so'rov 200 bilan qaytardi, lekin jadval o'zgarmasdi).
 async function fetchCatalog({ queryKey }) {
   const [_key, searchParams] = queryKey;
-  const { data } = await apiClient.get(`${BASE}/`, { params: searchParams });
+  const params = {};
+  if (searchParams?.start) params.start_date = searchParams.start;
+  if (searchParams?.end) params.end_date = searchParams.end;
+  const { data } = await apiClient.get(`${BASE}/`, { params });
   return data;
 }
 

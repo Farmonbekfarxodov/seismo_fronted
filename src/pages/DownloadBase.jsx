@@ -396,7 +396,7 @@ function SpmSection() {
     <form onSubmit={submit} className="card space-y-3 border-purple-300 lg:col-span-2">
       <h2 className="text-lg">{t("5) SPM fayldan geoseysmoga yuklash")}</h2>
       <p className="text-sm text-muted">
-        {t("Gidrogeoseysmologiya-*.xlsx fayllardagi o'lchovlar geoseysmo bazasiga (3-bo'lim bilan bir xil server) yoziladi. Har parametr uchun oxirgi to'ldirilgan sanadan keyingi, 0 bo'lmagan qiymatlargina qo'shiladi.")}
+        {t("Gidrogeoseysmologiya-*.xlsx fayllardagi o'lchovlar geoseysmo bazasiga (3-bo'lim bilan bir xil server) yoziladi. Har parametr uchun oxirgi to'ldirilgan sanadan keyingi, bo'sh bo'lmagan qiymatlar qo'shiladi — 0 ham amaldagi o'lchov sifatida saqlanadi.")}
       </p>
 
       <div className="flex gap-2">

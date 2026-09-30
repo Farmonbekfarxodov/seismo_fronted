@@ -13,20 +13,39 @@ async function fetchStations() {
   const { data } = await apiClient.get("/magnitka/api/stations/");
   return data.stations;
 }
-async function fetchMeasurements(stationIds, startDate, endDate) {
+async function fetchMeasurements(stationIds, startDate, endDate, signal) {
   if (stationIds.length === 0) return { series: [], base: "Yangibozor" };
   const params = { station_ids: stationIds.join(",") };
   // Sanalar tanlanmasa — parametr yuborilmaydi, backend BARCHA ma'lumotni qaytaradi
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
-  const { data } = await apiClient.get("/magnitka/api/measurements/", { params });
+  // `signal` — checkbox/sana tez-tez o'zgarganda oldingi (endi kerak bo'lmagan)
+  // so'rovni haqiqatan bekor qilish uchun (aks holda hammasi serverga
+  // yuborilib, javob kutilaveradi — 6 stansiya uchun 1-2 daqiqa kutish shundan).
+  const { data } = await apiClient.get("/magnitka/api/measurements/", { params, signal });
   return { series: data.data, base: data.base_station };
 }
-async function fetchEarthquakes(minMag) {
+async function fetchEarthquakes(minMag, signal) {
   const { data } = await apiClient.get("/magnitka/api/earthquakes/", {
     params: { min_magnitude: minMag },
+    signal,
   });
   return data.data;
+}
+
+// Loyihaning boshqa sahifalarida (GGS/Informativlik/Anomaliya) ishlatiladigan
+// xuddi shu standart chegara — zilzila stansiyaga "tegishli" hisoblanishi uchun.
+const MIN_MLGR = 2.5;
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 const LINE_COLORS = ["#0d6efd", "#198754", "#fd7e14", "#dc3545", "#6f42c1"];
@@ -46,13 +65,16 @@ export default function Magnitka() {
 
   const measurementsQuery = useQuery({
     queryKey: ["magnitka-measurements", selectedIds, dates.start, dates.end],
-    queryFn: () => fetchMeasurements(selectedIds, dates.start, dates.end),
+    // `signal` — TanStack Query bu queryKey eskirganda (checkbox/sana yana
+    // o'zgarganda) avtomatik chaqiradi va oldingi so'rov HAQIQATAN bekor
+    // qilinadi (shunchaki javobi e'tiborsiz qoldirilishi emas).
+    queryFn: ({ signal }) => fetchMeasurements(selectedIds, dates.start, dates.end, signal),
     enabled: selectedIds.length > 0,
   });
 
   const earthquakesQuery = useQuery({
     queryKey: ["magnitka-earthquakes", minMag],
-    queryFn: () => fetchEarthquakes(minMag),
+    queryFn: ({ signal }) => fetchEarthquakes(minMag, signal),
     enabled: showMag,
   });
 
@@ -65,9 +87,21 @@ export default function Magnitka() {
   const series = measurementsQuery.data?.series || [];
   const earthquakes = showMag ? earthquakesQuery.data || [] : [];
 
-  // Grafik davri ichiga tushadigan zilzilalar
-  const eqInRange = useMemo(() => {
-    if (!series.length || !earthquakes.length) return [];
+  const stationsById = useMemo(() => {
+    const map = {};
+    (stationsQuery.data || []).forEach((s) => { map[s.id] = s; });
+    return map;
+  }, [stationsQuery.data]);
+
+  // Har bir stansiya uchun ALOHIDA: grafik davri ichiga tushadigan VA
+  // shu stansiyaga masofa jihatidan "tegishli" (M/lgR >= 2.5, loyihaning
+  // boshqa sahifalaridagi bilan bir xil mezon) zilzilalar. Ilgari BARCHA
+  // zilzila HAMMA stansiya grafigida bir xil chizilardi, masofadan qat'i
+  // nazar — masalan Namangandagi zilzila Chotqol grafigida ham chiqardi.
+  const eqByStation = useMemo(() => {
+    const map = {};
+    if (!series.length || !earthquakes.length) return map;
+
     let min = null, max = null;
     for (const st of series) {
       for (const d of st.dates) {
@@ -75,11 +109,33 @@ export default function Magnitka() {
         if (max === null || d > max) max = d;
       }
     }
-    return earthquakes.filter((eq) => {
-      const day = eq.datetime.slice(0, 10);
-      return day >= min && day <= max;
-    });
-  }, [series, earthquakes]);
+
+    for (const st of series) {
+      const station = stationsById[st.station_id];
+      if (!station || station.lat == null || station.lon == null) {
+        map[st.station_id] = [];
+        continue;
+      }
+      map[st.station_id] = earthquakes.filter((eq) => {
+        const day = eq.datetime.slice(0, 10);
+        if (day < min || day > max) return false;
+        if (eq.lat == null || eq.lon == null) return false;
+        const r = haversineKm(station.lat, station.lon, eq.lat, eq.lon);
+        if (r <= 1) return false;
+        const mlgr = eq.magnitude / Math.log10(r);
+        return mlgr >= MIN_MLGR;
+      });
+    }
+    return map;
+  }, [series, earthquakes, stationsById]);
+
+  // Sarlavhadagi umumiy son — hech bo'lmasa bitta tanlangan stansiyaga
+  // tegishli, takrorlanmagan zilzilalar soni
+  const totalRelevantEq = useMemo(() => {
+    const seen = new Set();
+    Object.values(eqByStation).forEach((list) => list.forEach((eq) => seen.add(eq.datetime)));
+    return seen.size;
+  }, [eqByStation]);
 
   return (
     <div>
@@ -168,11 +224,11 @@ export default function Magnitka() {
             <p className="text-sm text-muted">{t("Ma'lumot yuklanmoqda...")}</p>
           )}
 
-          {showMag && eqInRange.length > 0 && (
+          {showMag && totalRelevantEq > 0 && (
             <p className="text-sm text-muted mb-2">
-              {t("🌋 Magnitudalar ko'rsatilmoqda (≥ M{mag}, {count} ta zilzila)", {
+              {t("🌋 Magnitudalar ko'rsatilmoqda (≥ M{mag}, M/lgR≥2.5, {count} ta zilzila)", {
                 mag: minMag,
-                count: eqInRange.length,
+                count: totalRelevantEq,
               })}
             </p>
           )}
@@ -180,7 +236,7 @@ export default function Magnitka() {
           {series.map((st, i) => (
             <LazyRender key={st.station_id} height={400}>
               <StationChart st={st} color={LINE_COLORS[i % LINE_COLORS.length]}
-                earthquakes={eqInRange} baseStation={measurementsQuery.data?.base ?? "Yangibozor"} />
+                earthquakes={eqByStation[st.station_id] || []} baseStation={measurementsQuery.data?.base ?? "Yangibozor"} />
             </LazyRender>
           ))}
         </div>
@@ -267,7 +323,9 @@ function StationChart({ st, color, earthquakes, baseStation }) {
             margin: { l: 60, r: 15, t: 30, b: 40 },
             shapes, annotations,
             xaxis: { gridcolor: "#DEE2E6" },
-            yaxis: { title: { text: yTitle }, gridcolor: "#DEE2E6" },
+            // automargin: Y o'qi nomi uzun bo'lganda (masalan "Δ (farq, ... ga
+            // nisbatan)") son belgilariga tegib qolmasin deb Plotly o'zi joy ajratadi
+            yaxis: { title: { text: yTitle }, gridcolor: "#DEE2E6", automargin: true },
             plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
             font: { size: 11, color: "#212529" },
             hovermode: "closest",

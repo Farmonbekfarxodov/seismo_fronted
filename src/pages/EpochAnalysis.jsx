@@ -355,7 +355,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
               title: { text: t("Zilziladan kunlar (0 — zilzila kuni)") },
               gridcolor: "#DEE2E6", zeroline: false,
             },
-            yaxis: { title: { text: t("{param} qiymati", { param: chart.param }) }, gridcolor: "#DEE2E6" },
+            yaxis: { title: { text: t("{param} qiymati", { param: chart.param }) }, gridcolor: "#DEE2E6", automargin: true },
             shapes: [{
               type: "line", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1,
               line: { color: "#212529", width: 2.5 },

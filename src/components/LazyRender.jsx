@@ -24,7 +24,11 @@ export default function LazyRender({ height = 480, children }) {
           obs.disconnect();
         }
       },
-      { rootMargin: "400px" }
+      // 400px o'rniga 1000px: sahifa hisobot uchun skrinshot olinganda yoki
+      // pastga tez aylantirilganda ko'proq grafik OLDINDAN (ekranga
+      // kelmasdan turib) tayyor bo'lib qoladi — "tayyorlanmoqda" holati
+      // kamroq ko'rinadi.
+      { rootMargin: "1000px" }
     );
     obs.observe(el);
     return () => obs.disconnect();

@@ -38,6 +38,8 @@ export const ru = {
   "Seysmik tahlil": "Сейсмический анализ",
   "Quduq tanlash, xarita va sigma-tahlil grafiklari":
     "Выбор скважины, карта и графики сигма-анализа",
+  "Har bir zilzila atrofidagi oyna bo'yicha grafiklar va sigma chiziqlari":
+    "Графики и сигма-линии в окне вокруг каждого землетрясения",
   "O'lchov dinamikasi va grafiklar": "Динамика измерений и графики",
   "Sigma-tahlil, xarita va tarix": "Сигма-анализ, карта и история",
   "q-baholash, grafiklar va Excel eksport": "q-оценка, графики и экспорт в Excel",
@@ -72,8 +74,8 @@ export const ru = {
   "Grafikni ko'rish uchun kamida bitta stansiya tanlang":
     "Выберите хотя бы одну станцию для просмотра графика",
   "Ma'lumot yuklanmoqda...": "Данные загружаются...",
-  "🌋 Magnitudalar ko'rsatilmoqda (≥ M{mag}, {count} ta zilzila)":
-    "🌋 Отображаются магнитуды (≥ M{mag}, {count} землетрясений)",
+  "🌋 Magnitudalar ko'rsatilmoqda (≥ M{mag}, M/lgR≥2.5, {count} ta zilzila)":
+    "🌋 Отображаются магнитуды (≥ M{mag}, M/lgR≥2.5, {count} землетрясений)",
   "{base} bilan mos vaqtli o'lchov topilmadi — grafik chizilmadi.":
     "Не найдено измерение, совпадающее по времени с {base} — график не построен.",
   "Δ (farq, {base} ga nisbatan)": "Δ (разница, относительно {base})",
@@ -140,8 +142,8 @@ export const ru = {
     "Имя файла должно начинаться с 'Gidrogeoseysmologiya' и быть в формате .xlsx:",
   "Papka yo'lini kiriting!": "Введите путь к папке!",
   "5) SPM fayldan geoseysmoga yuklash": "5) Загрузка из SPM-файла в geoseysmo",
-  "Gidrogeoseysmologiya-*.xlsx fayllardagi o'lchovlar geoseysmo bazasiga (3-bo'lim bilan bir xil server) yoziladi. Har parametr uchun oxirgi to'ldirilgan sanadan keyingi, 0 bo'lmagan qiymatlargina qo'shiladi.":
-    "Измерения из файлов Gidrogeoseysmologiya-*.xlsx записываются в базу geoseysmo (тот же сервер, что и в разделе 3). Для каждого параметра добавляются только ненулевые значения после последней заполненной даты.",
+  "Gidrogeoseysmologiya-*.xlsx fayllardagi o'lchovlar geoseysmo bazasiga (3-bo'lim bilan bir xil server) yoziladi. Har parametr uchun oxirgi to'ldirilgan sanadan keyingi, bo'sh bo'lmagan qiymatlar qo'shiladi — 0 ham amaldagi o'lchov sifatida saqlanadi.":
+    "Измерения из файлов Gidrogeoseysmologiya-*.xlsx записываются в базу geoseysmo (тот же сервер, что и в разделе 3). Для каждого параметра добавляются все непустые значения после последней заполненной даты — 0 тоже сохраняется как реальное измерение.",
   "Fayllarni yuklash": "Загрузка файлов",
   "Serverdagi papkadan": "Из папки на сервере",
   "Excel fayllar (bir nechtasini tanlash mumkin):": "Excel-файлы (можно выбрать несколько):",

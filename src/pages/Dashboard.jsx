@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 
 const MODULES = [
-  { to: "/seismos", title: "Seysmik tahlil", desc: "Quduq tanlash, xarita va sigma-tahlil grafiklari" },
+  { to: "/seismos", title: "GGS tahlili", desc: "Quduq tanlash, xarita va sigma-tahlil grafiklari" },
+  { to: "/epoch", title: "Zilzila tahlili", desc: "Har bir zilzila atrofidagi oyna bo'yicha grafiklar va sigma chiziqlari" },
   { to: "/magnitka", title: "Magnitka", desc: "O'lchov dinamikasi va grafiklar" },
   { to: "/anomaly", title: "Anomaliya", desc: "Sigma-tahlil, xarita va tarix" },
   { to: "/informativlik", title: "Informativlik", desc: "q-baholash, grafiklar va Excel eksport" },

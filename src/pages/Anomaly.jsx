@@ -438,7 +438,9 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
               attribution="&copy; OpenTopoMap" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Yorug'")}>
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+            {/* `{s}.` subdomensiz — Seismos.jsx bilan bir xil sabab: eski
+                subdomenli manzil "API KEY REQUIRED" berib qo'yadi. */}
+            <TileLayer url="https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Sputnik")}>
@@ -705,7 +707,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
     const l = {
       title: { text: `<b>${result.well} - ${result.param}</b>` },
       xaxis: { title: { text: t("Sana") }, range: result.x_range, gridcolor: "#DEE2E6" },
-      yaxis: { gridcolor: "#DEE2E6" },
+      yaxis: { gridcolor: "#DEE2E6", automargin: true },
       hovermode: "x unified",
       height: 500,
       // plotly.js'da "plotly_white" nomli shablon yo'q (u plotly.py niki) —
@@ -722,6 +724,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
         side: "right",
         range: [0, result.eq_axis_max],
         showgrid: false,
+        automargin: true,
       };
     }
     return l;

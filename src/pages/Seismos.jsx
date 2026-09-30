@@ -496,7 +496,11 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
               bermaydi. Shuning uchun u birinchi va standart qilib qo'yildi.
               Eski standart OpenStreetMap edi (checked o'sha yerda turgan). */}
           <LayersControl.BaseLayer checked name={t("Yozuvsiz fon")}>
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
+            {/* MUHIM: eski `{s}.` subdomenli cartocdn manzili endi tarmoqda
+                "API KEY REQUIRED" degan yozuv bilan chiqadi — CARTO bu
+                ko'p-subdomenli eski CDN yo'lini bekor qilib, kalitsiz
+                ishlaydigan yagona domenga o'tgan (subdomensiz). */}
+            <TileLayer url="https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name="OpenStreetMap">
@@ -508,7 +512,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
               attribution="&copy; OpenTopoMap" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Yorug'")}>
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+            <TileLayer url="https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name={t("Sputnik")}>
@@ -867,12 +871,13 @@ function SeriesChart({ series }) {
             height: 420,
             margin: { l: 60, r: 60, t: 45, b: 40 },
             xaxis: { gridcolor: "#DEE2E6" },
-            yaxis: { title: { text: t("{param} Qiymati", { param: series.param }) }, gridcolor: "#DEE2E6" },
+            yaxis: { title: { text: t("{param} Qiymati", { param: series.param }) }, gridcolor: "#DEE2E6", automargin: true },
             yaxis2: {
               title: { text: t("Magnituda (Mb)") },
               overlaying: "y", side: "right",
               range: [0, Math.max(7, ...(series.earthquakes?.map((e) => e.mb) || [7])) + 0.5],
               showgrid: false,
+              automargin: true,
             },
             annotations: eqAnnotations,
             plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
