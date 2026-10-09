@@ -632,7 +632,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
             tashlandi (foydalanuvchi o'chira olmaydi), har doim ko'rinadi */}
         <>
               {allWells.map((w) => {
-                const color = w.selected ? colorMap[w.name] : "lightblue";
+                const color = w.selected ? colorMap[w.name] : "#4B5563";
                 // Tanlanmaganlarga halqa faqat Mb rejimida (eski fayl mantig'i)
                 const canHaveRings = w.selected || filterMode === "mb";
                 return (
@@ -647,7 +647,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                           onToggleRings={() => toggleRings(w)} />
                       </Popup>
                     </Marker>
-                    {canHaveRings && ringsFor(w, w.selected ? color : "#ADD8E6")}
+                    {canHaveRings && ringsFor(w, w.selected ? color : "#4B5563")}
                   </span>
                 );
               })}
@@ -666,7 +666,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
           ma'lumotiga bog'liq emas, Seysmogen zonalar ro'yxatidan farqli),
           balandlik chegarasi olib tashlandi — Anomaly.jsx'dagi xuddi shu
           quti allaqachon shunday (chegarasiz) edi. */}
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs"
+      <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-sm"
         style={{ minWidth: 190 }}>
         {/* Ilgari alohida rus tiliga qattiq tarjima qilingan edi (Условные
             обозначения:), endi umumiy t() mexanizmiga o'tkazildi — shu bilan
@@ -695,7 +695,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
             <Tri c="#0000FF" />{" "}
             {t("Tanlangan skvajinalar")}
           </div>
-          <div><Tri c="#ADD8E6" /> {t("Tanlanmagan skvajinalar")}</div>
+          <div><Tri c="#4B5563" /> {t("Tanlanmagan skvajinalar")}</div>
           <div className="flex items-center gap-1.5 py-0.5">
             <div className="w-4 h-[3px] bg-[#8B0000] shrink-0"></div>
             <span>{t("Yer yoriqlari")}</span>
@@ -723,7 +723,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
           vaqtda, scrollsiz to'liq ko'rinadi; juda uzun ro'yxat uchun scroll
           hali ham xavfsizlik to'ri sifatida qoladi. */}
       {zoneList.length > 0 && (
-        <div className={`absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-xs overflow-y-auto ${isFullscreen ? "max-h-[85vh]" : "max-h-64"}`}
+        <div className={`absolute bottom-4 right-4 z-[1000] bg-white/95 border border-border rounded-md shadow px-3 py-2 text-sm overflow-y-auto ${isFullscreen ? "max-h-[85vh]" : "max-h-64"}`}
           style={{ minWidth: 200, maxWidth: 260 }}>
           <b>{t("Seysmogen zonalar:")}</b>
           <div className="mt-1 space-y-0.5">
