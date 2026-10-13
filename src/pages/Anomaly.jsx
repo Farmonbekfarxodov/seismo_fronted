@@ -11,7 +11,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -754,7 +754,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
     const l = {
       title: { text: `<b>${result.well} - ${formatParam(result.param)}</b>` },
       xaxis: { title: { text: t("Sana") }, range: result.x_range, gridcolor: "#DEE2E6" },
-      yaxis: { gridcolor: "#DEE2E6", automargin: true },
+      yaxis: { title: { text: paramAxisLabel(result.param) }, gridcolor: "#DEE2E6", automargin: true },
       hovermode: "x unified",
       height: 500,
       // plotly.js'da "plotly_white" nomli shablon yo'q (u plotly.py niki) —

@@ -5,7 +5,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -317,11 +317,18 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
     ];
   }, [chart, showSigma, sigmaFactor]);
 
+  // PNG sifati: standart scale=1 past piksel zichligi berar edi — `scale: 3`
+  // o'lchamni o'zgartirmay rasm zichligini 3 barobar oshiradi (Seismos.jsx
+  // bilan bir xil tuzatish).
   function downloadPng() {
     const el = document.getElementById(chartId)?.querySelector(".js-plotly-plot");
     if (el) {
+      const rect = el.getBoundingClientRect();
       Plotly.downloadImage(el, {
-        format: "png", width: 1200, height: 500,
+        format: "png",
+        width: Math.round(rect.width) || 1200,
+        height: Math.round(rect.height) || 500,
+        scale: 3,
         filename: `${chart.skvajina}_${chart.param}_${chart.earthquake.datetime.slice(0, 10)}`,
       });
     }
@@ -356,7 +363,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
               title: { text: t("Zilziladan kunlar (0 — zilzila kuni)") },
               gridcolor: "#DEE2E6", zeroline: false,
             },
-            yaxis: { title: { text: t("{param} qiymati", { param: formatParam(chart.param) }) }, gridcolor: "#DEE2E6", automargin: true },
+            yaxis: { title: { text: paramAxisLabel(chart.param) }, gridcolor: "#DEE2E6", automargin: true },
             shapes: [{
               type: "line", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1,
               line: { color: "#212529", width: 2.5 },

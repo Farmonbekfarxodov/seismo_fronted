@@ -11,7 +11,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -929,11 +929,29 @@ function SeriesChart({ series }) {
     }).filter(Boolean);
   }, [openedEq, series.earthquakes, t]);
 
+  // XATO TUZATISH (PNG yuklab olish): ilgari bu yerda grafik responsive
+  // (useResizeHandler, width:"100%") ekranda ko'rsatilgan o'lchamidan BUTUNLAY
+  // boshqa, qattiq belgilangan o'lchamda (1400x600) eksport qilinardi.
+  // Plotly bunday holatda rasmni OLDIN joriy grafikni o'sha yangi o'lchamga
+  // qayta chizib (relayout), keyin suratga oladi — va aynan shu qayta chizish
+  // paytida ikkinchi (yaxis2) o'qdagi "Zilzila (Mb)" ustunlari ba'zan umuman
+  // chizilmay qolar edi (ekrandagi joriy o'lcham bilan eksport o'lchami
+  // orasidagi katta farq tufayli). Sifat xiraligi esa `scale` parametri
+  // berilmagani (standart scale=1, past piksel zichligi) sababli edi.
+  // Tuzatish: (1) eksportni grafikning HOZIRGI ekrandagi aniq o'lchamida
+  // qilish (hech qanday qayta-joylashtirish/relayout kerak emas — zilzilalar
+  // ekranda qanday ko'rinsa, eksportda ham xuddi shunday chiqadi), (2) sifat
+  // uchun faqat `scale: 3` qo'shish (o'lchamni o'zgartirmay, piksel
+  // zichligini 3 barobar oshiradi — natija aniq/keskin PNG).
   function downloadPng() {
     const el = document.getElementById(chartId)?.querySelector(".js-plotly-plot");
     if (el) {
+      const rect = el.getBoundingClientRect();
       Plotly.downloadImage(el, {
-        format: "png", width: 1400, height: 600,
+        format: "png",
+        width: Math.round(rect.width) || 1400,
+        height: Math.round(rect.height) || 600,
+        scale: 3,
         filename: `${series.key} - ${series.param}`.replace(/[|/\\]/g, "-"),
       });
     }
@@ -960,7 +978,7 @@ function SeriesChart({ series }) {
             height: 420,
             margin: { l: 60, r: 60, t: 45, b: 40 },
             xaxis: { gridcolor: "#DEE2E6" },
-            yaxis: { title: { text: t("{param} Qiymati", { param: formatParam(series.param) }) }, gridcolor: "#DEE2E6", automargin: true },
+            yaxis: { title: { text: paramAxisLabel(series.param) }, gridcolor: "#DEE2E6", automargin: true },
             yaxis2: {
               title: { text: t("Magnituda (Mb)") },
               overlaying: "y", side: "right",

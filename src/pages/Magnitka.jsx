@@ -278,11 +278,18 @@ function StationChart({ st, color, earthquakes, baseStation }) {
     ? t("Δ (farq, {base} ga nisbatan)", { base: baseStation })
     : t("Qiymat");
 
+  // PNG sifati: standart scale=1 past piksel zichligi berar edi — `scale: 3`
+  // o'lchamni o'zgartirmay rasm zichligini 3 barobar oshiradi (Seismos.jsx
+  // bilan bir xil tuzatish).
   function downloadPng() {
     const el = document.getElementById(chartId)?.querySelector(".js-plotly-plot");
     if (el) {
+      const rect = el.getBoundingClientRect();
       Plotly.downloadImage(el, {
-        format: "png", width: 1400, height: 500,
+        format: "png",
+        width: Math.round(rect.width) || 1400,
+        height: Math.round(rect.height) || 500,
+        scale: 3,
         filename: `Magnitka_${st.station_name}`,
       });
     }

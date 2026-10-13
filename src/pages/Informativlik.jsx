@@ -5,7 +5,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -316,7 +316,7 @@ function InfChart({ series }) {
           margin: { l: 55, r: 15, t: 30, b: 40 },
           shapes, annotations,
           xaxis: { rangeslider: { visible: true, thickness: 0.08 }, gridcolor: "#DEE2E6" },
-          yaxis: { gridcolor: "#DEE2E6" },
+          yaxis: { title: { text: paramAxisLabel(series.param) }, gridcolor: "#DEE2E6", automargin: true },
           plot_bgcolor: "#FFFFFF", paper_bgcolor: "#FFFFFF",
           legend: { orientation: "h", y: -0.35 },
           font: { size: 11, color: "#212529" },
