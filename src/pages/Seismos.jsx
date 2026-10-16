@@ -80,6 +80,17 @@ function eqStyle(mb, filterMode) {
   return { color: "yellow", radius: mb * 1.5 };
 }
 
+/* Hisoblangan (raschotniy) deformatsiya — laboratoriya formulasi:
+     εD = ( R / 10^(0.413·M − 2.66) )^(−3)
+   M — magnituda (Mb), R — zilzila epitsentridan skvajinagacha masofa (km).
+   Natija 10⁻⁷ birligida qaytariladi (εD ≥ 0.7 — ta'sir chegarasi).
+   Faqat xarita tooltip'ida ko'rsatish uchun; filtrlashda ishlatilmaydi. */
+function calcEpsD(mb, rKm) {
+  if (mb == null || rKm == null || !(rKm > 0)) return null;
+  const eps = Math.pow(rKm / Math.pow(10, 0.413 * mb - 2.66), -3);
+  return Number((eps / 1e-7).toPrecision(2));
+}
+
 export default function Seismos() {
   const { t } = useLanguage();
   const options = useQuery({ queryKey: ["seismos-options"], queryFn: fetchOptions });
@@ -620,7 +631,8 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                     {t("Magnituda (Mb):")} {eq.mb}<br />
                     {t("Chuqurlik (km):")} {eq.depth ?? "—"}<br />
                     {eq.r_km != null && <>{t("Masofa (km):")} {eq.r_km}<br /></>}
-                    {eq.mlgr != null && <>M/lgR: {eq.mlgr}</>}
+                    {eq.mlgr != null && <>M/lgR: {eq.mlgr}<br /></>}
+                    {calcEpsD(eq.mb, eq.r_km) != null && <>εD (×10⁻⁷): {calcEpsD(eq.mb, eq.r_km)}</>}
                   </div>
                 </LTooltip>
               </CircleMarker>
