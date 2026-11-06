@@ -938,7 +938,7 @@ function SeriesChart({ series }) {
   // Qavat soni EQ_LABEL_MAX_LEVELS bilan cheklangan; grafik balandligi va
   // yuqori chekka qavatlar soniga qarab kattalashtiriladi, shunda belgilar
   // kesilib qolmaydi va chizma maydoni o'zgarmaydi.
-  // Belgi matni: M — magnituda, H — chuqurlik, R — skvajinagacha masofa.
+  // Belgi matni: M — magnituda, h — chuqurlik, R — skvajinagacha masofa.
   const { eqAnnotations, eqExtraTop } = useMemo(() => {
     if (!series.earthquakes?.length || openedEq.size === 0) {
       return { eqAnnotations: [], eqExtraTop: 0 };
@@ -971,7 +971,7 @@ function SeriesChart({ series }) {
       return {
         x: eq.datetime.slice(0, 10), y: eq.mb, yref: "y2",
         text:
-          `M: ${eq.mb}${eq.depth != null ? `, H: ${eq.depth} km` : ""}<br>` +
+          `M: ${eq.mb}${eq.depth != null ? `, h: ${eq.depth} km` : ""}<br>` +
           `${eq.r_km != null ? `R: ${eq.r_km} km` : ""}`,
         showarrow: true, arrowhead: 2, ax: 0, ay: -40 - level * EQ_LABEL_STEP,
         bgcolor: "white", bordercolor: "#4B0082", borderwidth: 1, borderpad: 4,
