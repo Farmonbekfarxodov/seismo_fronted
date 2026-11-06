@@ -5,7 +5,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam, paramAxisLabel } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel, wellLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -110,7 +110,7 @@ export default function Informativlik() {
                   <label key={w} className="flex items-center gap-2 text-sm py-1 px-1.5 rounded hover:bg-ink-900 cursor-pointer">
                     <input type="checkbox" className="accent-amber shrink-0"
                       checked={wells.includes(w)} onChange={() => toggle(wells, setWells, w)} />
-                    <span className="truncate">{w}</span>
+                    <span className="truncate">{wellLabel(w)}</span>
                   </label>
                 ))}
               </div>
@@ -210,7 +210,7 @@ export default function Informativlik() {
                         {result.results.map((r, i) => (
                           <tr key={i} className="border-b border-border last:border-0">
                             <td className="px-3 py-2.5 text-muted">{i + 1}</td>
-                            <td className="px-3 py-2.5">{r.skvajina}</td>
+                            <td className="px-3 py-2.5">{wellLabel(r.skvajina)}</td>
                             <td className="px-3 py-2.5 font-mono text-teal">{formatParam(r.parametr)}</td>
                             <td className="px-3 py-2.5 font-mono">{r.T}</td>
                             <td className="px-3 py-2.5 font-mono">{r.t}</td>
@@ -300,7 +300,7 @@ function InfChart({ series }) {
     <div className="card">
       <div className="flex items-baseline justify-between mb-2">
         <h3 className="text-base">
-          {series.key} — <span className="text-teal font-mono">{formatParam(series.param)}</span>
+          {wellLabel(series.key)} — <span className="text-teal font-mono">{formatParam(series.param)}</span>
         </h3>
         <p className="text-xs text-muted font-mono">
           q=<span className="text-amber">{series.q}</span> · {t("{captured}/{total} zilzila tutildi", {

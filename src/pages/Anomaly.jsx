@@ -11,7 +11,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam, paramAxisLabel } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel, wellLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -169,7 +169,7 @@ function AnalysisTab() {
                   <label key={w} className="flex items-center gap-2 text-sm py-1 px-1.5 rounded hover:bg-ink-900 cursor-pointer">
                     <input type="checkbox" className="accent-amber shrink-0"
                       checked={wells.includes(w)} onChange={() => toggle(wells, setWells, w)} />
-                    <span className="truncate">{w}</span>
+                    <span className="truncate">{wellLabel(w)}</span>
                   </label>
                 ))}
               </div>
@@ -509,7 +509,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
               {normal.map((w) => (
                 <Marker key={w.name} position={[w.lat, w.lon]} icon={normalIcon()}>
                   <LTooltip>
-                    <b>{w.name}</b><br />
+                    <b>{wellLabel(w.name)}</b><br />
                     <span style={{ color: "green" }}>{t("Normal")}</span>
                   </LTooltip>
                   <Popup maxWidth={480}>
@@ -527,7 +527,7 @@ function AnomalyMap({ map, layers, focusedWell, onWellClick, onGoToChart }) {
                   icon={anomalousIcon(w.name === focusedWell)}
                   eventHandlers={{ click: () => onWellClick?.(w.name) }}>
                   <LTooltip>
-                    <b>{w.name}</b><br />
+                    <b>{wellLabel(w.name)}</b><br />
                     <span style={{ color: "red" }}>⚠️ {t("Anomaliya: {params}", { params: w.params.map(formatParam).join(", ") })}</span><br />
                     <span style={{ color: "#6c757d" }}>{t("Grafigini birinchi o'ringa chiqarish uchun bosing")}</span>
                   </LTooltip>
@@ -605,7 +605,7 @@ function WellInfoPopup({ well, onGoToChart }) {
 
   const info = data || {};
   const rows = [
-    [t("Nomi"), info.nomi || well.name],
+    [t("Nomi"), wellLabel(info.nomi || well.name)],
     [t("Quduq turi"), info.quduq_turi],
     [t("Chuqurlik"), info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
     [t("Seysmotektonik holat"), info.seysmotektonik_holat],
@@ -752,7 +752,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
 
   const layout = useMemo(() => {
     const l = {
-      title: { text: `<b>${result.well} - ${formatParam(result.param)}</b>` },
+      title: { text: `<b>${wellLabel(result.well)} - ${formatParam(result.param)}</b>` },
       xaxis: { title: { text: t("Sana") }, range: result.x_range, gridcolor: "#DEE2E6" },
       yaxis: { title: { text: paramAxisLabel(result.param) }, gridcolor: "#DEE2E6", automargin: true },
       hovermode: "x unified",
@@ -782,7 +782,7 @@ function AnomalyChart({ result, sigma, focused = false }) {
       <div className="flex items-baseline justify-between mb-1">
         <h3 className="text-base">
           {focused && <span className="text-amber mr-1.5" title={t("Xaritada tanlangan")}>●</span>}
-          {result.well} — <span className="text-teal font-mono">{formatParam(result.param)}</span>
+          {wellLabel(result.well)} — <span className="text-teal font-mono">{formatParam(result.param)}</span>
         </h3>
         <p className="text-xs text-amber font-mono">{t("{count} ta anomaliya", { count: result.anomalies.length })}</p>
       </div>
@@ -835,7 +835,7 @@ function HistoryTab() {
             {data.records.map((r) => (
               <tr key={r.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-mono text-muted">{r.created_at?.slice(0, 10)}</td>
-                <td className="px-4 py-3">{r.skvajina}</td>
+                <td className="px-4 py-3">{wellLabel(r.skvajina)}</td>
                 <td className="px-4 py-3 font-mono text-teal">{formatParam(r.parameter)}</td>
                 <td className="px-4 py-3 text-muted">{r.time_period_label}</td>
                 <td className="px-4 py-3 text-amber font-mono">{r.detected_anomalies_count}</td>

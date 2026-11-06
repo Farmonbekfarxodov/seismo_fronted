@@ -55,3 +55,20 @@ export function paramAxisLabel(code) {
   const unit = paramUnit(code);
   return unit ? `${formatParam(code)}, ${unit}` : formatParam(code);
 }
+
+// Skvajina nomlarini FAQAT sahifada ko'rsatish uchun to'g'rilash. Bazadagi va
+// API'dagi asl nom (masalan tanlov kaliti, so'rov parametri, fayl nomi)
+// o'zgarmaydi — faqat foydalanuvchiga ko'rinadigan matn almashtiriladi.
+//   "Fozilova"                -> "Fozilov"
+//   "Sabzavotchilik instituti" -> "Sabzavotchilik"
+const WELL_NAME_FIXES = [
+  [/\bFozilova\b/g, "Fozilov"],
+  [/\bSabzavotchilik\s+instituti?\b/gi, "Sabzavotchilik"],
+];
+
+export function wellLabel(name) {
+  if (name == null) return name;
+  let s = String(name);
+  for (const [re, to] of WELL_NAME_FIXES) s = s.replace(re, to);
+  return s;
+}

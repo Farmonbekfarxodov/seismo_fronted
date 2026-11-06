@@ -5,7 +5,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam, paramAxisLabel } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel, wellLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -98,7 +98,7 @@ export default function EpochAnalysis() {
                       <input type="checkbox" className="accent-teal shrink-0"
                         checked={selectedKeys.includes(key)}
                         onChange={() => toggle(selectedKeys, setSelectedKeys, key)} />
-                      <span className="truncate">{key}</span>
+                      <span className="truncate">{wellLabel(key)}</span>
                     </label>
                   ))}
                 </div>
@@ -339,7 +339,7 @@ function EpochChart({ chart, showSigma, sigmaFactor }) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-wrap gap-2">
         <div>
           <h3 className="text-base font-semibold text-teal">
-            {chart.key} — {formatParam(chart.param)}
+            {wellLabel(chart.key)} — {formatParam(chart.param)}
           </h3>
           <p className="text-xs text-muted mt-0.5">
             {t("Zilzila:")} {eqDate} · Mb {chart.earthquake.mb}

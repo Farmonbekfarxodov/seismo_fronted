@@ -11,7 +11,7 @@ import createPlotlyComponent from "react-plotly.js/factory";
 import { apiClient } from "../api/client";
 import LazyRender from "../components/LazyRender";
 import { useLanguage } from "../i18n/LanguageContext";
-import { formatParam, paramAxisLabel } from "../utils/chemFormat";
+import { formatParam, paramAxisLabel, wellLabel } from "../utils/chemFormat";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -79,6 +79,14 @@ function eqStyle(mb, filterMode) {
   if (mb >= 4) return { color: "orange", radius: mb * 2 };
   return { color: "yellow", radius: mb * 1.5 };
 }
+
+/* Grafikdagi zilzila belgilari (bosilganda ochiladigan) ustma-ust tushmasligi
+   uchun sozlamalar: EQ_LABEL_GAP — grafik vaqt oralig'ining qanday ulushidan
+   yaqin belgilar bir qavatda turmasligi; EQ_LABEL_STEP — qavatlar orasidagi
+   masofa (px); EQ_LABEL_MAX_LEVELS — eng ko'p qavat soni. */
+const EQ_LABEL_GAP = 0.15;
+const EQ_LABEL_STEP = 50;
+const EQ_LABEL_MAX_LEVELS = 4;
 
 /* Hisoblangan (raschotniy) deformatsiya — laboratoriya formulasi:
      εD = ( R / 10^(0.413·M − 2.66) )^(−3)
@@ -170,7 +178,7 @@ export default function Seismos() {
                     <input type="checkbox" className="accent-teal shrink-0"
                       checked={selectedKeys.includes(key)}
                       onChange={() => toggle(selectedKeys, setSelectedKeys, key)} />
-                    <span className="truncate">{key}</span>
+                    <span className="truncate">{wellLabel(key)}</span>
                   </label>
                 ))}
               </div>
@@ -651,7 +659,7 @@ const ResultsMap = memo(function ResultsMap({ options, result, layers, filterMod
                   <span key={w.name}>
                     <Marker position={[w.lat, w.lon]}
                       icon={triangleIcon(color)}>
-                      <LTooltip>{w.name}</LTooltip>
+                      <LTooltip>{wellLabel(w.name)}</LTooltip>
                       <Popup maxWidth={480}>
                         <WellInfoPopup well={w} color={w.selected ? color : null}
                           canHaveRings={canHaveRings}
@@ -780,7 +788,7 @@ function WellInfoPopup({ well, color, canHaveRings, ringsOn, onToggleRings }) {
 
   const info = data || {};
   const rows = [
-    [t("Nomi"), info.nomi || well.name],
+    [t("Nomi"), wellLabel(info.nomi || well.name)],
     [t("Quduq turi"), info.quduq_turi],
     [t("Chuqurlik"), info.chuqurlik != null && info.chuqurlik !== "Ma'lumot yo'q" ? `${info.chuqurlik} m` : info.chuqurlik],
     [t("Seysmotektonik holat"), info.seysmotektonik_holat],
@@ -901,7 +909,7 @@ function SeriesChart({ series }) {
         },
         customdata: series.earthquakes.map((eq) => [eq.r_km, eq.mlgr]),
         hovertemplate:
-          `${t("Sana:")} %{x}<br>Mb: %{y}<br>${t("Masofa:")} %{customdata[0]} km<extra></extra>`,
+          `${t("Sana:")} %{x}<br>M: %{y}<br>R: %{customdata[0]} km<extra></extra>`,
       });
     }
 
@@ -924,22 +932,54 @@ function SeriesChart({ series }) {
     });
   }
 
-  const eqAnnotations = useMemo(() => {
-    if (!series.earthquakes?.length) return [];
-    return [...openedEq].map((idx) => {
-      const eq = series.earthquakes[idx];
-      if (!eq) return null;
+  // Ochilgan belgilar ustma-ust tushmasligi uchun "qavatlarga" taqsimlanadi:
+  // vaqt bo'yicha bir-biriga yaqin (grafik kengligining EQ_LABEL_GAP
+  // ulushidan yaqinroq) belgilar navbatdagi, balandroq qavatga ko'tariladi.
+  // Qavat soni EQ_LABEL_MAX_LEVELS bilan cheklangan; grafik balandligi va
+  // yuqori chekka qavatlar soniga qarab kattalashtiriladi, shunda belgilar
+  // kesilib qolmaydi va chizma maydoni o'zgarmaydi.
+  // Belgi matni: M — magnituda, H — chuqurlik, R — skvajinagacha masofa.
+  const { eqAnnotations, eqExtraTop } = useMemo(() => {
+    if (!series.earthquakes?.length || openedEq.size === 0) {
+      return { eqAnnotations: [], eqExtraTop: 0 };
+    }
+    const t0 = Date.parse(series.dates?.[0]);
+    const t1 = Date.parse(series.dates?.[series.dates.length - 1]);
+    const span = Number.isFinite(t0) && Number.isFinite(t1) && t1 > t0 ? t1 - t0 : 1;
+    const minGap = span * EQ_LABEL_GAP;
+
+    const items = [...openedEq]
+      .map((idx) => series.earthquakes[idx])
+      .filter(Boolean)
+      .map((eq) => ({ eq, ts: Date.parse(eq.datetime.slice(0, 10)) }))
+      .sort((a, b) => a.ts - b.ts);
+
+    const levelLast = []; // har qavatdagi oxirgi belgining vaqti
+    let maxLevel = 0;
+    const annotations = items.map(({ eq, ts }) => {
+      let level = levelLast.findIndex((last) => ts - last >= minGap);
+      if (level === -1) {
+        if (levelLast.length < EQ_LABEL_MAX_LEVELS) {
+          level = levelLast.length;
+        } else {
+          // Hamma qavat band — eng oldin bo'shagan qavatni tanlaymiz
+          level = levelLast.indexOf(Math.min(...levelLast));
+        }
+      }
+      levelLast[level] = ts;
+      maxLevel = Math.max(maxLevel, level);
       return {
         x: eq.datetime.slice(0, 10), y: eq.mb, yref: "y2",
         text:
-          `Mb: ${eq.mb}${eq.depth != null ? `, ${t("Chuqurlik:")} ${eq.depth} km` : ""}<br>` +
-          `${eq.r_km != null ? `${t("Masofa:")} ${eq.r_km} km` : ""}`,
-        showarrow: true, arrowhead: 2, ax: 0, ay: -40,
+          `M: ${eq.mb}${eq.depth != null ? `, H: ${eq.depth} km` : ""}<br>` +
+          `${eq.r_km != null ? `R: ${eq.r_km} km` : ""}`,
+        showarrow: true, arrowhead: 2, ax: 0, ay: -40 - level * EQ_LABEL_STEP,
         bgcolor: "white", bordercolor: "#4B0082", borderwidth: 1, borderpad: 4,
         font: { size: 14, color: "#212529" },
       };
-    }).filter(Boolean);
-  }, [openedEq, series.earthquakes, t]);
+    });
+    return { eqAnnotations: annotations, eqExtraTop: maxLevel * EQ_LABEL_STEP };
+  }, [openedEq, series.earthquakes, series.dates]);
 
   // XATO TUZATISH (PNG yuklab olish): ilgari bu yerda grafik responsive
   // (useResizeHandler, width:"100%") ekranda ko'rsatilgan o'lchamidan BUTUNLAY
@@ -974,7 +1014,7 @@ function SeriesChart({ series }) {
       {/* 3-rasmdagi karta sarlavhasi: teal nom + PNG tugmasi */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="text-base font-semibold text-teal">
-          {series.key} - {formatParam(series.param)}
+          {wellLabel(series.key)} - {formatParam(series.param)}
         </h3>
         <button onClick={downloadPng}
           className="px-3 py-1.5 text-sm rounded-md border border-teal text-teal hover:bg-blue-50 transition-colors">
@@ -986,9 +1026,9 @@ function SeriesChart({ series }) {
           data={data}
           onClick={handlePlotClick}
           layout={{
-            title: { text: `${series.key} - ${formatParam(series.param)}`, font: { size: 17 } },
-            height: 420,
-            margin: { l: 60, r: 60, t: 45, b: 40 },
+            title: { text: `${wellLabel(series.key)} - ${formatParam(series.param)}`, font: { size: 17 } },
+            height: 420 + eqExtraTop,
+            margin: { l: 60, r: 60, t: 45 + eqExtraTop, b: 40 },
             xaxis: { gridcolor: "#DEE2E6" },
             yaxis: { title: { text: paramAxisLabel(series.param) }, gridcolor: "#DEE2E6", automargin: true },
             yaxis2: {
